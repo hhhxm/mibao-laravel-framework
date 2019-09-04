@@ -1,0 +1,22 @@
+{
+    "name": "mibao/laravel-framework",
+    "description": "米宝专用",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael",
+            "email": "hhhxm@tom.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flower\\Rose\\": "src/Flower/Rose",
+            "Flower\\Lily\\": "src/Flower/Lily"
+        }
+    }
+}
