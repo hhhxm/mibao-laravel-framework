@@ -11,12 +11,21 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": ">=7.0"
+        "php": ">=7.0",
+        "barryvdh/laravel-cors": "^0.11.0",
+        "laravel/passport": "^7.2.2",
+        "maatwebsite/excel": "^3.1",
+        "overtrue/laravel-wechat": "^5.0",
+        "smartins/passport-multiauth": "^4.0",
+        "spatie/laravel-cors": "^1.2",
+        "spatie/laravel-permission": "^2.9"
     },
     "autoload": {
         "psr-4": {
             "Flower\\Rose\\": "src/Flower/Rose",
             "Flower\\Lily\\": "src/Flower/Lily"
         }
+    },
+    "require-dev": {
     }
 }
