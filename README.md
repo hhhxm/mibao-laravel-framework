@@ -29,15 +29,67 @@ composer require "mibao/laravel-framework"
 ],
 ``` -->
 
-#### 微信配置
+#### 相关配置文件
 
-```shell
+1. Mibao设置
+
+```php
+// 统一执行
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider"
+```
+
+```php
+// 分类执行
+
+// 设置文件
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="config"
+// Models文件
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="models"
+// 数据迁移
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="migrations"
+// 数据填充
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="seeds"
+```
+
+2. 微信Easywechat
+
+```php
 php artisan vendor:publish --provider="Overtrue\LaravelWeChat\ServiceProvider"
+```
+
+3. 跨域Cros
+
+```php
+php artisan vendor:publish --provider="Barryvdh\Cors\ServiceProvider"
+```
+
+4. 权限管理
+
+```php
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="config"
+```
+
+#### 数据迁移与填充
+
+通过上面的命令，已经把相关文件copy到对应的目录
+
+- models -> \app\Models
+- migrations -> \data\migrations
+- seeds -> \data\seeds
+
+通过下面的命令把迁移数据，并填充数据
+
+```php
+// 只有migrate:refresh才能使用--seeder，来指定class
+php artisan migrate:refresh --seeder=MibaoDatabaseSeeder
+// 安装passport
+php artisan passport:install
 ```
 
 #### 排除微信相关的路由
 
-:rotating_light: 在中间件 `App\Http\Middleware\VerifyCsrfToken` 排除微信相关的路由，如：
+在中间件 `App\Http\Middleware\VerifyCsrfToken` 排除微信相关的路由，如：
 
 ```php
 protected $except = [
@@ -46,31 +98,32 @@ protected $except = [
 ];
 ```
 
-#### OAuth 中间件
+#### 路由前缀设置
 
-1. 在 `app/Http/Kernel.php` 中添加路由中间件：
-
-```php
-protected $routeMiddleware = [
-    // easywechat的中间件
-    'wechat.oauth' => \Overtrue\LaravelWeChat\Middleware\OAuthAuthenticate::class,
-    // 本地测试用，带微信用户
-    'wechat.test' => \Overtrue\LaravelWeChat\Middleware\WeChatTest::class,
-];
-```
-
-2. 在路由中添加中间件：
+1. 关闭默认路由，否则会出现双重路由，把/config/app.php里面的RouteServiceProvider注释掉
 
 ```php
-//...
-Route::group(['middleware' => ['web', 'wechat.oauth']], function () {
-    Route::get('/user', function () {
-        $user = session('wechat.oauth_user.default'); // 拿到授权用户资料
-        dd($user);
-    });
-});
+        /*
+         * Application Service Providers...
+         */
+        ...
+        App\Providers\EventServiceProvider::class,
+        // App\Providers\RouteServiceProvider::class,
 ```
 
+2. 改用Mibao的路由设置，路径前缀都改为"do/"
+
+
+
+
+
+
+
+## 第三方组件说明参考
+
+[https://github.com/overtrue/laravel-wechat](https://github.com/overtrue/laravel-wechat)
+[https://github.com/barryvdh/laravel-cors](https://github.com/barryvdh/laravel-cors)
+[https://docs.spatie.be/laravel-permission/v3/installation-laravel/](https://docs.spatie.be/laravel-permission/v3/installation-laravel/)
 
 ## License
 
