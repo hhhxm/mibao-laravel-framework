@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Admin;
+namespace Mibao\LaravelFramework\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,6 +35,6 @@ class Share extends Model
      */
     public function wechat_user()
     {
-        return $this->belongsTo('App\Models\WechatUser', 'wechat_user_id', 'id');
+        return $this->belongsTo('Mibao\LaravelFramework\Models\WechatUser', 'wechat_user_id', 'id');
     }
 }

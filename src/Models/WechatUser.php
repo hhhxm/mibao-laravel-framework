@@ -1,24 +1,28 @@
 <?php
 
-namespace App\Models;
+namespace Mibao\LaravelFramework\Models;
 
-use Laravel\Passport\HasApiTokens;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Log;
 use Auth;
-use App\Http\Controllers\WeChat\BaseController as WeChat;
-use App\Http\Controllers\Api\RedisController;
-use App\Models\Work;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Passport\HasApiTokens;
+use Mibao\LaravelFramework\Controllers\Helper\RedisController;
+// use Mibao\LaravelFramework\Models\Work;
+use SMartins\PassportMultiauth\HasMultiAuthApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+use Webpatser\Uuid\Uuid;
 
 class WechatUser extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasMultiAuthApiTokens, Notifiable;
+    use HasRoles;
+    public $incrementing = false;
     public $viewOpenid = false;
     /*
      * 添加属性
      */
-    protected $appends = ['rank','top_work','have_work'];
+    // protected $appends = ['rank','top_work','have_work'];
     /**
      * The attributes that are mass assignable.
      *
@@ -31,7 +35,7 @@ class WechatUser extends Authenticatable
      * @var array
      */
     // protected $hidden = [ 'openid', 'language', 'province', 'city', 'country', 'privilege', 'unionid', ];
-    protected $visible = ['id', 'openid', 'nickname', 'headimgurl', 'sex', 'rank', 'score_catcall','score_call','score_total','top_work','have_work'];
+    protected $visible = ['nickname', 'headimgurl', 'sex', 'rank'];
     /**
      * 应该被转化为原生类型的属性
      *
@@ -54,7 +58,7 @@ class WechatUser extends Authenticatable
     }
     public function getHaveWorkAttribute()
     {
-        return Work::where('wechat_user_id',$this->id)->count() > 0 ;
+        // return Work::where('wechat_user_id',$this->id)->count() > 0 ;
         // return Work::where('wechat_user_id',$this->id)->get() ;
     }
     /**
@@ -124,22 +128,14 @@ class WechatUser extends Authenticatable
         return $rank;
     }
     /**
-     * 微信头像处理
+     * 生成新模型时，生成uuid
      */
-    public function getHeadimgurlAttribute($val)
+    public static function boot()
     {
-        $tmp = explode('/mmopen/', $val);
-        if(isset($tmp[1])){
-            return [
-                'local'  => env('APP_URL').'/mmopen/'.$tmp[1],
-                'origin' => $val
-            ];
-        }else{
-            return [
-                'local'  => null,
-                'origin' => $val
-            ];
-        }
+        parent::boot();
+        self::creating(function ($model) {
+            $model{$model->getKeyName()} = (string) Uuid::generate(4);
+        });
     }
     /**
      * 可以认证字段

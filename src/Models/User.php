@@ -1,16 +1,19 @@
 <?php
 
-namespace App\Models;
+namespace Mibao\LaravelFramework\Models;
 
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use SMartins\PassportMultiauth\HasMultiAuthApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Webpatser\Uuid\Uuid;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasMultiAuthApiTokens, Notifiable;
     use HasRoles;
+    public $incrementing = false;
 
     protected $guard_name = 'api';
     /**
@@ -30,6 +33,16 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+    /**
+     * 生成新模型时，生成uuid
+     */
+    public static function boot()
+    {
+        parent::boot();
+        self::creating(function ($model) {
+            $model{$model->getKeyName()} = (string) Uuid::generate(4);
+        });
+    }
     /**
      * 除了邮件还可以用用户名认证
      *

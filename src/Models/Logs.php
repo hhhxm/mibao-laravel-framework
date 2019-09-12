@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Mibao\LaravelFramework\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

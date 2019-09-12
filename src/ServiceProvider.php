@@ -2,12 +2,14 @@
 
 namespace Mibao\LaravelFramework;
 
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
-use Mibao\LaravelFramework\Tests\RouteService;
-use Mibao\LaravelFramework\Controllers\WeChatController;
+use Laravel\Passport\Bridge\PersonalAccessGrant;
+use League\OAuth2\Server\AuthorizationServer;
+use Mibao\LaravelFramework\Controllers\Auth\WeChatController;
 use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
 
 /**
@@ -23,21 +25,21 @@ class ServiceProvider extends LaravelServiceProvider
     public function boot()
     {
         $this->setupConfig();
-        // dd($this->app);
 
         // 监听微信用户登录
         Event::listen(WeChatUserAuthorized::class, function ($event) {
             $user = $event->user;
             $isNew = $event->isNewSession;
             // $event->account;
-            // dd($user);
-            WeChatController::register($event->user);
+            WeChatController::checkUser($event->user);
         });
 
+        // Passport Personal Access Token 过期时间设定为一周
+        // 参考https://github.com/overtrue/blog/blob/master/_app/_posts/2018-11-01-set-expired-at-for-laravel-passport-personal-access-token.md
+        $this->app->get(AuthorizationServer::class)
+              ->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P1W'));
 
         // dd($this->app);
-        // $route = new RouteService();
-        // $route->register($this->app);
 
         $this->modifyAuthConfig();
     }
@@ -54,16 +56,18 @@ class ServiceProvider extends LaravelServiceProvider
      */
     protected function setupConfig()
     {
-        $this->loadRoutesFrom(__DIR__.'/routes.php');
         $configPath = realpath(__DIR__.'/config.php');
         
         if ($this->app->runningInConsole()) {
             // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
             $this->publishes([ $configPath => config_path('mibao-framework.php') ], 'config');
-            $this->publishes([ __DIR__.'/../database/migrations' => $this->app->databasePath()."/migrations" ], 'migrations');
-            $this->publishes([ __DIR__.'/../database/seeds' => $this->app->databasePath()."/seeds" ], 'seeds');
-            $this->publishes([ __DIR__.'/Models' => $this->app->path()."/Models" ], 'models');
+            $this->publishes([ __DIR__.'/../database/migrations' => database_path("/migrations") ], 'migrations');
+            $this->publishes([ __DIR__.'/../database/seeds' => database_path("/seeds") ], 'seeds');
+            $this->publishes([ __DIR__.'/../routes' => base_path('routes') ], 'routes');
+            // $this->publishes([ __DIR__.'/../models' => app_path("/Models") ], 'models');
+            // $this->publishes([ __DIR__.'/../app/Http/Controllers' => app_path("/Controllers") ], 'controllers');
         }
+        $this->loadRoutesFrom(__DIR__.'/routes.php');
         $this->mergeConfigFrom($configPath, 'mibao-framework');
     }
     protected function modifyAuthConfig()
@@ -84,15 +88,20 @@ class ServiceProvider extends LaravelServiceProvider
             'driver' => 'passport',
             'provider' => 'wechat_users',
         ]);
+        // 修改普通用户的提供者
+        Config::set('auth.providers.users', [
+            'driver' => 'eloquent',
+            'model' => \Mibao\LaravelFramework\Models\User::class,
+        ]);
         // 增加管理员的提供者
         Config::set('auth.providers.admins', [
             'driver' => 'eloquent',
-            'model' => \App\Models\Admin::class,
+            'model' => \Mibao\LaravelFramework\Models\Admin::class,
         ]);
         // 增加微信用户的提供者
         Config::set('auth.providers.wechat_users', [
             'driver' => 'eloquent',
-            'model' => \App\Models\WechatUser::class,
+            'model' => \Mibao\LaravelFramework\Models\WechatUser::class,
         ]);
 
     }

@@ -1,11 +1,11 @@
 <?php
-namespace Mibao\LaravelFramework\Controllers;
+namespace Mibao\LaravelFramework\Controllers\Auth;
 
-use Validator;
+use Mibao\LaravelFramework\Models\WechatUser;
 use Auth;
-use Log;
-use DB;
 use Carbon\Carbon;
+use GuzzleHttp\Client as Http;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -13,16 +13,12 @@ use Laravel\Passport\Client;
 use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\ResourceServer;
 // use League\OAuth2\Server\Exception\OAuthServerException;
+use Mibao\LaravelFramework\Controllers\Helper\RedisController;
 use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
-use GuzzleHttp\Client as Http;
-// use App\Http\Controllers\ApiController;
-// use App\Models\WechatUser;
-
-use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Validator;
 
-// class AuthenticateController extends ApiController
 class AuthenticateController
 {
     use AuthenticatesUsers;
@@ -37,30 +33,52 @@ class AuthenticateController
         //     'logout'
         // ]);
     }
-    // 登录
+    /**
+     * 用户密码登录
+     * @param  Request $request
+     * @return Response
+     */
     public function login(Request $request)
     {
         $this->guardName = $request->type ? $request->type :'api';
         $this->guardProvider = config('auth.guards.'.$this->guardName.'.provider');
         $validator = Validator::make($request->all(), [
             'name'    => 'required|exists:'.$this->guardProvider,
-            'password' => 'required|between:5,32',
+            'password' => 'required|between:6,64',
         ]);
         if ($validator->fails()) {
-            $request->request->add([
-                'errors' => $validator->errors(),
-                'code' => 401,
-            ]);
-            return $this->sendFailedLoginResponse($request);
+            return responder()->error('param_error')->data($validator->errors()->all());
         }
+
         $this->username=$request->name;
         $this->password=$request->password;
 
         $res = $this->authenticateClient();
-        return $res ? $this->success($res) : $this->failed(401, '认证出错');
+        return $res ? 
+                responder()->success(['accessToken' => $res]) : 
+                responder()->error('认证出错');
     }
-
-    // 退出登录
+    /**
+     * 使用ticket登录
+     * @param  Request $request
+     * @return Response
+     */
+    public function loginByTicket(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ticket' => 'required|string',
+        ]);
+        if ($validator->fails()) {
+            return responder()->error('param_error')->data($validator->errors()->all());
+        }
+        $res = RedisController::get_wechat_login_ticket($request->ticket);
+        return responder()->success(['token' => $res]);
+    }
+    /**
+     * 登出
+     * @param  Request $request
+     * @return Response
+     */
     public function logout(Request $request)
     {
         if (Auth::guard($this->guardName)->check()){
@@ -79,7 +97,9 @@ class AuthenticateController
         $this->username=$openid;
         $this->password=$openid;
         $this->guardProvider = config('auth.guards.wechat.provider');
-        $res = $this->authenticateClient();
+        // $res = $this->authenticateClient();
+        $wechatUser = WechatUser::where('openid',$openid)->first();
+        $res = $this->authenticateClientPersonal($wechatUser, "wechatUser:$openid");
         return $res ? $res : '认证出错';
     }
     //调用认证接口获取授权token
@@ -88,12 +108,7 @@ class AuthenticateController
         // 个人感觉通过.env配置太复杂，直接从数据库查更方便
         $password_client = Client::query()->where('password_client',1)->latest()->first();
         $client = new Http();
-        if($this->guardProvider=='wechat_users'){
-            $url = env('APP_URL') . '/do/oauth/token/wechat';
-        }else{
-        }
-        // $url = env('APP_URL') . '/do/wechat/token';
-        $url = 'https://www.163.com/';
+        $url = env('APP_URL') . '/do/wechat/token';
         $data = [
             'form_params' => [
                 'grant_type' => 'password',
@@ -105,28 +120,28 @@ class AuthenticateController
                 'provider' => $this->guardProvider,
             ],
         ];
-        // dd($data);
         try {
             $res = $client->request('POST', $url, $data);
         } catch (\Exception $e) {
-            throw  new UnauthorizedHttpException('', '账号验证失败');
+            throw  new UnauthorizedHttpException('', '账号验证失败1');
             return false;
         }
         if (!isset($res) || $res->getStatusCode() == 401) {
-            throw  new UnauthorizedHttpException('', '账号验证失败');
+            throw  new UnauthorizedHttpException('', '账号验证失败2');
             return false;
         }else{
             $resJson = json_decode((string)$res->getBody(), true);
+            // dd($data, $resJson);
             return $resJson['access_token'];
         }
     }
 
     // 私人访问令牌，不会超时，一直有效
-    protected function authenticateClientPersonal($user, $token_name='wechat_user', $scope=array('wechat'))
+    protected function authenticateClientPersonal($user, $tokenName, $scope=[])
     {
         // 把api默认的提供者users改为wechat_users
         Config::set('auth.guards.api.provider', 'wechat_users');
-        return $user->createToken($token_name, $scope)->accessToken;
+        return $user->createToken($tokenName, $scope)->accessToken;
     }
     protected function authenticated(Request $request)
     {

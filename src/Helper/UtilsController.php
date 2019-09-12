@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Mibao\LaravelFramework\Helper;
 
 use Illuminate\Http\Request;
-use App\Helpers\Api\ApiResponse;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Auth\AuthManager;;
 use Carbon\Carbon;
@@ -16,50 +14,21 @@ use App\Models\Logs as LogsModel;
 use Illuminate\Support\Facades\Storage;
 
 
-class ApiController extends Controller
+class UtilsController
 {
-
-    use ApiResponse;
-
-    public static function getUrlKeyValue($url, $key)
-    {
-        $url_parts = parse_url($url);
-        if(isset($url_parts['query'])){
-            parse_str($url_parts['query'], $path_parts);
-            $res = !isset($path_parts[$key]) ? null : $path_parts[$key];
-            return $res;
-        }
-        return null;
-    }
     /**
-     * 测试log
+     * 保存客户端的出错日志
      *
      * @return \Illuminate\Http\Response
      */
-    protected function testLog($request, $res='')
+    public function logFromClient(Request $request)
     {
-        if($request->debug){
-            Log::debug($_SERVER);
-            Log::debug($request->all());
-            Log::debug($res);
-        }
-        return true;
-    }
-    /**
-     * 保存出错日志
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function saveLog(Request $request)
-    {
-        $content = $request->content ? $request->content : $request->all();
-        $log = new LogsModel();
-        $log->type    = $request->type;
-        $log->content = $content;
-        $log->server  = json_encode($_SERVER);
-        $log->request = json_encode($request->all());
-        $log->save();
-        return $this->success($log->id);
+        LogsModel::create([
+            "type"    => $request->type,
+            "content" => $request->content ,
+            "request" => json_encode($request->all()),
+        ]);
+        return responder()->success();
     }
     /**
      * 验证提交参数
@@ -72,11 +41,7 @@ class ApiController extends Controller
             return preg_match('/^((13[0-9])|(14[5,7,9])|(15[^4])|(18[0-9])|(17[0,1,3,5,6,7,8]))\d{8}$/', $value);
         });
         $validator = Validator::make($request->all(), $roles);
-        if ($validator->fails()) {
-            return $validator->errors();
-        }else{
-            return true;
-        }
+        return $validator->fails() ? $validator->errors() : true;
     }
     /**
      * 数据分页统一封装

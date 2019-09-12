@@ -14,8 +14,10 @@ class CreateWechatUsersTable extends Migration
     public function up()
     {
         Schema::create('wechat_users', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->integer('user_id')->nullable();  // 用户ID
+            $table->primary('id');
+            // $table->bigIncrements('id');
+            $table->uuid('id');
+            $table->uuid('user_id')->nullable();  // 用户ID
             $table->string('password');
             $table->string('appid')->nullable();  // 公众号id
             $table->string('openid')->unique();  // 用户的唯一标识

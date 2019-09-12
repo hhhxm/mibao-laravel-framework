@@ -109,20 +109,20 @@ class RouteService
             $middlewareBase = ["web", "wechat.oauth:$accout"];
             $middlewareUserINfo = ["web", "wechat.oauth:$accout,$scope"];
         }
-        // 只获取微信用户OPENID
-        Route::prefix($this->getRoutePrefix())
-             ->middleware($middlewareBase)
-             ->namespace($this->appNamespace)
-             ->group(function() {
-                Route::get('wechat/oauth', 'WeChatController@oauth')->name('wechat.oauth');
-            });
-        // 获取微信用户信息
-        Route::prefix($this->getRoutePrefix())
-             ->middleware($middlewareUserINfo)
-             ->namespace($this->appNamespace)
-             ->group(function() {
-                Route::get('wechat/oauth/userinfo', 'WeChatController@oauth')->name('wechat.oauth.userinfo');
-            });
+        // // 只获取微信用户OPENID
+        // Route::prefix($this->getRoutePrefix())
+        //      ->middleware($middlewareBase)
+        //      ->namespace($this->appNamespace)
+        //      ->group(function() {
+        //         Route::get('wechat/oauth', 'WeChatController@oauth')->name('wechat.oauth');
+        //     });
+        // // 获取微信用户信息
+        // Route::prefix($this->getRoutePrefix())
+        //      ->middleware($middlewareUserINfo)
+        //      ->namespace($this->appNamespace)
+        //      ->group(function() {
+        //         Route::get('wechat/oauth/userinfo', 'WeChatController@oauth')->name('wechat.oauth.userinfo');
+        //     });
     }
     /**
      * 判断环境，再给出相应路径

@@ -1,6 +1,13 @@
 # mibao-laravel-framework
 
 快速开发H5项目框架
+1. 多用户认证
+2. api响应支持
+3. 微信easywechat框架
+4. 分组权限
+5. api跨域访问
+6. 用户id使用uuid
+7. 路由统一加前缀"do/"
 
 ## 框架要求
 
@@ -49,6 +56,8 @@ php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" -
 php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="migrations"
 // 数据填充
 php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="seeds"
+// 自定义路由
+php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="routes"
 ```
 
 2. 微信Easywechat
@@ -68,6 +77,12 @@ php artisan vendor:publish --provider="Barryvdh\Cors\ServiceProvider"
 ```php
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="migrations"
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="config"
+```
+
+5. api响应管理
+
+```php
+php artisan vendor:publish --provider="Flugg\Responder\ResponderServiceProvider"
 ```
 
 #### 数据迁移与填充
@@ -98,7 +113,7 @@ protected $except = [
 ];
 ```
 
-#### 路由前缀设置
+#### 修改原laravel框架的配置
 
 1. 关闭默认路由，否则会出现双重路由，把/config/app.php里面的RouteServiceProvider注释掉
 
@@ -111,19 +126,31 @@ protected $except = [
         // App\Providers\RouteServiceProvider::class,
 ```
 
-2. 改用Mibao的路由设置，路径前缀都改为"do/"
+2. 修改异常输出，替换/app/Exceptions/Handler.php里的异常类
 
+```php
+// 注释原框架的类
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
-
+// 替换成下面的类
+use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
+```
 
 
 
 
 ## 第三方组件说明参考
 
-[https://github.com/overtrue/laravel-wechat](https://github.com/overtrue/laravel-wechat)
-[https://github.com/barryvdh/laravel-cors](https://github.com/barryvdh/laravel-cors)
-[https://docs.spatie.be/laravel-permission/v3/installation-laravel/](https://docs.spatie.be/laravel-permission/v3/installation-laravel/)
+<https://github.com/overtrue/laravel-wechat>
+<https://github.com/barryvdh/laravel-cors>
+<https://docs.spatie.be/laravel-permission/v3/installation-laravel/>
+<https://github.com/sfelix-martins/passport-multiauth>
+<https://github.com/flugger/laravel-responder>
+
+## 相关参考
+
+[Laravel 使用 UUID 作为用户表主键并使用自定义用户表字段](https://nova.moe/laravel-use-uuid-as-primary-key-with-custom-authentication-fields/)
+[Implement UUID on Authentication Built-in Laravel 5.7](https://medium.com/@didin.ahmadi/implement-uuid-on-authentication-built-in-laravel-5-7-e289e6a5a9a5)
 
 ## License
 
