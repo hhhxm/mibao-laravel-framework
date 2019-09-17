@@ -27,7 +27,7 @@ class WechatDev
                         'token' => null,
                         'provider' => 'WeChat',
                         ]);
-        session(['wechat.oauth_user.default' => $socialiteUser]);
+        session()->flash('wechat.oauth_user.default', $socialiteUser);
         return $next($request);
     }
 }

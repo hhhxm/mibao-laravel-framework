@@ -2,15 +2,8 @@
 
 namespace Mibao\LaravelFramework\Controllers\Api\Wechat;
 
-use Mibao\LaravelFramework\Models\WechatUser;
 use EasyWeChat;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Mibao\LaravelFramework\Controllers\Auth\AuthenticateController;
-use Mibao\LaravelFramework\Controllers\Helper\RedisController;
 
 class BaseController
 {
@@ -33,6 +26,6 @@ class BaseController
             'jssdk' => $jssdk,
         ];
 
-        return $this->success($res);
+        return responder()->success($res);
     }
 }

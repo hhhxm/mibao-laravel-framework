@@ -4,14 +4,14 @@ namespace Mibao\LaravelFramework\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Logs extends Model
+class Logging extends Model
 {
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['server', 'request', 'content','created_at'];
+    protected $fillable = ['model_type', 'model_id', 'server', 'request', 'content','created_at'];
 
     /**
      * The attributes that should be hidden for arrays.

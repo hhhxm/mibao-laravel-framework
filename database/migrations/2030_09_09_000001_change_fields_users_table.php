@@ -35,6 +35,9 @@ class ChangeFieldsUsersTable extends Migration
         Schema::table('oauth_clients', function (Blueprint $table) {
             $table->string('user_id', 36)->change();
         });
+        Schema::table('media', function (Blueprint $table) {
+            $table->string('model_id', 36)->change();
+        });
     }
 
     /**

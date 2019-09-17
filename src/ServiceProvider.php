@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use League\OAuth2\Server\AuthorizationServer;
 use Mibao\LaravelFramework\Controllers\Auth\WeChatController;
+use Mibao\LaravelFramework\Listeners\WeChatUserAuthorizedListener;
 use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
 
 /**
@@ -27,17 +28,12 @@ class ServiceProvider extends LaravelServiceProvider
         $this->setupConfig();
 
         // 监听微信用户登录
-        Event::listen(WeChatUserAuthorized::class, function ($event) {
-            $user = $event->user;
-            $isNew = $event->isNewSession;
-            // $event->account;
-            WeChatController::checkUser($event->user);
-        });
+        Event::listen(WeChatUserAuthorized::class, WeChatUserAuthorizedListener::class);
 
         // Passport Personal Access Token 过期时间设定为一周
         // 参考https://github.com/overtrue/blog/blob/master/_app/_posts/2018-11-01-set-expired-at-for-laravel-passport-personal-access-token.md
         $this->app->get(AuthorizationServer::class)
-              ->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P1W'));
+              ->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P3D'));
 
         // dd($this->app);
 
@@ -61,9 +57,9 @@ class ServiceProvider extends LaravelServiceProvider
         if ($this->app->runningInConsole()) {
             // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
             $this->publishes([ $configPath => config_path('mibao-framework.php') ], 'config');
-            $this->publishes([ __DIR__.'/../database/migrations' => database_path("/migrations") ], 'migrations');
-            $this->publishes([ __DIR__.'/../database/seeds' => database_path("/seeds") ], 'seeds');
+            $this->publishes([ __DIR__.'/../database' => database_path("/") ], 'database');
             $this->publishes([ __DIR__.'/../routes' => base_path('routes') ], 'routes');
+            $this->publishes([ __DIR__.'/../resources' => base_path('resources') ], 'resources');
             // $this->publishes([ __DIR__.'/../models' => app_path("/Models") ], 'models');
             // $this->publishes([ __DIR__.'/../app/Http/Controllers' => app_path("/Controllers") ], 'controllers');
         }

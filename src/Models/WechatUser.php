@@ -7,18 +7,24 @@ use Auth;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Passport\HasApiTokens;
-use Mibao\LaravelFramework\Controllers\Helper\RedisController;
+use Mibao\LaravelFramework\Helpers\Redis;
 // use Mibao\LaravelFramework\Models\Work;
 use SMartins\PassportMultiauth\HasMultiAuthApiTokens;
+use Spatie\MediaLibrary\HasMedia\HasMedia;
+use Spatie\MediaLibrary\HasMedia\HasMediaTrait;
+use Spatie\MediaLibrary\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 use Webpatser\Uuid\Uuid;
 
-class WechatUser extends Authenticatable
+class WechatUser extends Authenticatable implements HasMedia
 {
     use HasMultiAuthApiTokens, Notifiable;
     use HasRoles;
+    use HasMediaTrait;
+
     public $incrementing = false;
     public $viewOpenid = false;
+    
     /*
      * 添加属性
      */
@@ -95,7 +101,7 @@ class WechatUser extends Authenticatable
      */
     public function getTopWorkAttribute()
     {
-       $topWork = RedisController::readUserTopWorkId($this->id);
+       $topWork = Redis::readUserTopWorkId($this->id);
         if($topWork){
             $work = Work::find($topWork['work_id']);
         }else{
@@ -115,15 +121,15 @@ class WechatUser extends Authenticatable
      */
     public function getRankAttribute()
     {
-        $rank = RedisController::readUserRankOrder($this->id);
+        $rank = Redis::readUserRankOrder($this->id);
 
         // 如果redis里面没排名，从数据库里面取数更新
         if(!$rank){
             // $works = Game::where('wechat_user_id', $this->wechat_user_id)->get();
             // foreach ($works as $key => $work) {
-                // RedisController::saveUserWorkScore($this->wechat_user_id, $work->id, $work->score);
+                // Redis::saveUserWorkScore($this->wechat_user_id, $work->id, $work->score);
             // }
-            // $rank = RedisController::readUserRankOrder($this->id);
+            // $rank = Redis::readUserRankOrder($this->id);
         }
         return $rank;
     }
@@ -136,6 +142,20 @@ class WechatUser extends Authenticatable
         self::creating(function ($model) {
             $model{$model->getKeyName()} = (string) Uuid::generate(4);
         });
+    }
+    public function registerMediaCollections()
+    {
+        $this
+            // ->addMediaCollection('avatar')
+            // ->singleFile()
+            // ->useDisk('oss')
+            // ->registerMediaConversions(function (Media $media) {
+            //     $this
+            //         ->addMediaConversion('thumb')
+            //         ->width(100)
+            //         ->height(100);
+            // })
+            ;
     }
     /**
      * 可以认证字段

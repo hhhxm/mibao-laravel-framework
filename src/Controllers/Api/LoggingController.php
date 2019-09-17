@@ -1,14 +1,14 @@
 <?php
 
-namespace Mibao\LaravelFramework\Controllers\Api\Wechat;
+namespace Mibao\LaravelFramework\Controllers;
 
-// use Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Mibao\LaravelFramework\Controllers\Controller;
-use Mibao\LaravelFramework\Models\WechatUser;
+use Mibao\LaravelFramework\Models\Logging;
+use Auth;
 
-class UserController extends Controller
+class LoggingController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,19 +17,32 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $model = WechatUser::select();
+        $model = Logging::select();
         return responder()->success($this->conditionsPaginate($model, $request));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * 保存客户端的出错日志
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        //
+        Validator::make($request->all(), [
+            'type'    => 'required|string',
+            'content' => 'required|string',
+        ])->validate();
+        
+        $user = Auth::user();
+        $data = $request->all();
+        $data['model_type'] = get_class($user);
+        $data['model_id']   = $user->id;
+        $data['ip']         = $request->getClientIp();
+        
+        Logging:: create($data);
+        
+        return responder()->success();
     }
 
     /**
@@ -64,13 +77,5 @@ class UserController extends Controller
     public function destroy($id)
     {
         //
-    }
-
-    public function uploadAvatar(Request $request)
-    {
-        // dd($request);
-        $user = Auth::user();
-        $res = $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
-        return responder()->success([$res]);
     }
 }

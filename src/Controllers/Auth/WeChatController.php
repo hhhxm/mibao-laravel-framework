@@ -8,17 +8,26 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+// use Illuminate\Support\Facades\Log;
 use Mibao\LaravelFramework\Controllers\Auth\AuthenticateController;
-use Mibao\LaravelFramework\Controllers\Helper\RedisController;
 
 class WeChatController
 {
     use RegistersUsers;
 
+    public function WeChatUserAuthorizedListener($event)
+    {
+        $user = $event->user;
+        $isNew = $event->isNewSession;
+        // $event->account;
+        // static::checkUser($event->user);
+    }
     /**
-     * 引用微信用户注册的注册类
-     * 重写注册流程.
+     * 检查微信用户是否已经注册
+     * 未注册：生成新用户
+     * 已注册：更新数据
+     * 以openid为用户凭证，发放登录电子票，让客户端认证登录
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -28,26 +37,24 @@ class WeChatController
         // 微信用户数据
         $data = $socialteuse->getOriginal();
         if(isset($data['openid'])){
+            DB::beginTransaction();
+
             // 判断openid是否存在用户存，有就更新，没就新建
-            $wechatUser = WechatUser::firstOrNew([
+            $wechatUser = WechatUser::lockForUpdate()->firstOrNew([
                 'openid' => $data['openid'],
             ]);
             $wechatUser->fill($data);
-            $wechatUser->password = Hash::make($data['openid']);
+            $wechatUser->exists ?: $wechatUser->password = Hash::make(strrev($data['openid']));
             $wechatUser->save();
-            
             // 广播添加新用户
             !$wechatUser->wasRecentlyCreated ? : event(new Registered($wechatUser));
-
             // 获取用户token
-            $authenticate = new AuthenticateController();
-            $token = $authenticate->wechatLogin($data['openid']);
+            $res = (new AuthenticateController)->loginByWechatOpenid($data['openid']);
+            // 缓存一次用户的apiTicket
+            session()->flash('apiTicket', $res->ticket);
 
-            // 记录token到redis，用ticket取用
-            $res = RedisController::set_wechat_login_ticket($token, $wechatUser);
-
-            session(['wechat.oauth_user.api_ticket' => $res->ticket]);
-        }
+            DB::commit();
+    }
     }
     /**
      * 微信认证
@@ -57,32 +64,22 @@ class WeChatController
      */
     public function oauth(Request $request)
     {
-        $ticket = session('wechat.oauth_user.api_ticket');
+        $ticket = session('apiTicket');
         // 回调地址加上ticket
         $redirectUrl  = $request->redirectUrl ? : env("APP_URL");
         $redirectUrl .= strpos($request->redirectUrl, '#/?') ? '&' : '?';
         $redirectUrl .= 'ticket='.$ticket;
-        // 把ticket放到客户端cookie，给api访问使用
-        $cookie = cookie('ticket', $ticket, 60*24*30);
-        // return $this->success($redirectUrl);
         return responder()->success([$redirectUrl]);
-        // return redirect()->intended($redirectUrl)->cookie($cookie);
     }
     /**
-     * 使用ticket登录
-     * @param  Request $request
-     * @return json
+     * 获取微信access_token
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
-    public function login_by_ticket(Request $request)
+    public function getOffciaAccoutAccessToken(Request $request)
     {
-        $valid = $this->validatorParams($request, [
-            'ticket' => 'required|string',
-        ]);
-        if($valid!==true){
-            return $this->failed(1003, $valid);
-        }
-        $res = RedisController::get_wechat_login_ticket($request->ticket);
-        return $this->success($res);
+        return responder()->success(EasyWeChat::officialAccount()->access_token->getToken());
     }
     /**
      * 获取微信JSSDK.
@@ -92,17 +89,12 @@ class WeChatController
     public function getJssdk(Request $request)
     {
         $officialAccount = EasyWeChat::officialAccount(); // 公众号
-        $url = $request->url;
         $apis = $request->apis ? $request->apis : ['onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ',];
-        $debug = $request->debug ? true : false;
+        $debug = $request->debug ? : false;
 
-        if($url) $officialAccount->jssdk->setUrl($url);
+        !$request->url ? : $officialAccount->jssdk->setUrl($request->url);
         $jssdk = $officialAccount->jssdk->buildConfig($apis, $debug, false, false);
 
-        $res = [
-            'jssdk' => $jssdk,
-        ];
-
-        return $this->success($res);
+        return $this->success([ 'jssdk' => $jssdk ]);
     }
 }

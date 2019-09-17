@@ -38,7 +38,7 @@ composer require "mibao/laravel-framework"
 
 #### 相关配置文件
 
-1. Mibao设置
+* Mibao设置
 
 ```php
 // 统一执行
@@ -60,30 +60,37 @@ php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" -
 php artisan vendor:publish --provider="Mibao\LaravelFramework\ServiceProvider" --tag="routes"
 ```
 
-2. 微信Easywechat
+* 微信Easywechat
 
 ```php
 php artisan vendor:publish --provider="Overtrue\LaravelWeChat\ServiceProvider"
 ```
 
-3. 跨域Cros
+* 跨域Cros
 
 ```php
 php artisan vendor:publish --provider="Barryvdh\Cors\ServiceProvider"
 ```
 
-4. 权限管理
+* 权限管理
 
 ```php
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="migrations"
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider" --tag="config"
 ```
 
-5. api响应管理
+* api响应管理
 
 ```php
 php artisan vendor:publish --provider="Flugg\Responder\ResponderServiceProvider"
 ```
+* 媒体管理
+
+```php
+php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="migrations"
+php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="config"
+```
+
 
 #### 数据迁移与填充
 
@@ -115,7 +122,7 @@ protected $except = [
 
 #### 修改原laravel框架的配置
 
-1. 关闭默认路由，否则会出现双重路由，把/config/app.php里面的RouteServiceProvider注释掉
+* 关闭默认路由，否则会出现双重路由，把/config/app.php里面的RouteServiceProvider注释掉
 
 ```php
         /*
@@ -126,14 +133,31 @@ protected $except = [
         // App\Providers\RouteServiceProvider::class,
 ```
 
-2. 修改异常输出，替换/app/Exceptions/Handler.php里的异常类
+* 修改异常输出，替换/app/Exceptions/Handler.php里的异常类
 
 ```php
-// 注释原框架的类
+// 注释原框架的异常处理类
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-
-// 替换成下面的类
+// 替换成Responder的异常处理类
 use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
+```
+
+* 修改/app/Exceptions/Handler.php，过滤掉oauth2认证失败后的日志报错，否则用户登录时输入错密码，日志会产生大量出错记录。
+
+```php
+    public function report(Exception $exception)
+    {
+        if ($exception instanceof \League\OAuth2\Server\Exception\OAuthServerException && $exception->getCode() == 6) {
+            return;
+        }
+        parent::report($exception);
+    }
+```
+
+* 修改/config/app.php，让faker支持中文。
+
+```php
+    'faker_locale' => 'zh_CN',
 ```
 
 
@@ -151,6 +175,7 @@ use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
 
 [Laravel 使用 UUID 作为用户表主键并使用自定义用户表字段](https://nova.moe/laravel-use-uuid-as-primary-key-with-custom-authentication-fields/)
 [Implement UUID on Authentication Built-in Laravel 5.7](https://medium.com/@didin.ahmadi/implement-uuid-on-authentication-built-in-laravel-5-7-e289e6a5a9a5)
+[Error Log Problems When Using Laravel Passport for User Login Authentication](https://laracasts.com/discuss/channels/laravel/error-log-problems-when-using-laravel-passport-for-user-login-authentication?page=1)
 
 ## License
 

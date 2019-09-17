@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateLogsTable extends Migration
+class CreateLoggingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,10 @@ class CreateLogsTable extends Migration
      */
     public function up()
     {
-        Schema::create('logs', function (Blueprint $table) {
+        Schema::create('loggings', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('model_type')->nullable();
+            $table->uuid('model_id')->nullable();
             $table->longText('type')->nullable();
             $table->longText('content')->nullable();
             $table->longText('request')->nullable();
@@ -30,6 +32,6 @@ class CreateLogsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('logs');
+        Schema::dropIfExists('loggings');
     }
 }
