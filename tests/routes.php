@@ -7,6 +7,7 @@
 namespace Mibao\LaravelFramework;
 
 use Barryvdh\Cors\HandleCors;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
@@ -17,6 +18,8 @@ use Overtrue\LaravelWeChat\Middleware\OAuthAuthenticate as WechatOAuthAuthentica
 use SMartins\PassportMultiauth\Http\Middleware\AddCustomProvider;
 use SMartins\PassportMultiauth\Http\Middleware\ConfigAccessTokenCustomProvider;
 use SMartins\PassportMultiauth\Http\Middleware\MultiAuthenticate;
+use Socialite;
+
 // 路由的命令究竟
 $appNamespace = 'Mibao\LaravelFramework\Controllers';
 // dump($this->app);
@@ -46,10 +49,10 @@ $apiApiPath = base_path('routes/mibao-api.php');
 // 本地测试时，通过中间件注入微信用户模拟数据，避免跳转到微信服务器认证
 if(env('APP_ENV') === 'local'){
     $wechatMiddlewareBase = ["web", 'wechat.dev', "wechat.oauth:$accout"];
-    $wechatMiddlewareUserINfo = ["web", 'wechat.dev', "wechat.oauth:$accout,$scope"];
+    $wechatMiddlewareUserInfo = ["web", 'wechat.dev', "wechat.oauth:$accout,$scope"];
 }else{
     $wechatMiddlewareBase = ["web", "wechat.oauth:$accout"];
-    $wechatMiddlewareUserINfo = ["web", "wechat.oauth:$accout,$scope"];
+    $wechatMiddlewareUserInfo = ["web", "wechat.oauth:$accout,$scope"];
 }
 
 /**
@@ -81,7 +84,7 @@ if(File::exists($apiApiPath)){
 }
 
 // Passport身份认证的路由
-// Passport::routes(null, ['prefix' => getRoutePrefix()]);
+Passport::routes();
 Passport::tokensExpireIn(now()->addDays(15));
 Passport::refreshTokensExpireIn(now()->addDays(30));
 Route::middleware(['oauth.providers'])
@@ -108,16 +111,17 @@ Route::prefix(config('mibao-framework.routePrefix'))
         ->namespace($appNamespace)
         ->group(function() {
             Route::get('wechat/oauth', 'Auth\WeChatController@oauth')->name('wechat.oauth');
+            Route::get('wechat/remote/oauth', 'Auth\WeChatController@oauth')->name('wechat.remote.oauth');
         });
 
 // 获取微信用户信息
 Route::prefix(config('mibao-framework.routePrefix'))
-        ->middleware($wechatMiddlewareUserINfo)
+        ->middleware($wechatMiddlewareUserInfo)
         ->namespace($appNamespace)
         ->group(function() {
             Route::get('wechat/oauth/userinfo', 'Auth\WeChatController@oauth')->name('wechat.oauth.userinfo');
+            Route::get('wechat/remote/oauth/userinfo', 'Auth\WeChatController@oauth')->name('wechat.remote.oauth.userinfo');
         });
-
 
 /*
   微信公众号远程调用
@@ -126,7 +130,61 @@ Route::prefix(config('mibao-framework.routePrefix').'api')
         ->middleware([WechatRemotePremission::class])
         ->namespace($appNamespace)
         ->group(function() {
-            Route::get('wechat/remote/official/access_token', 'Auth\WeChatController@getOffciaAccoutAccessToken')->name('api.wechat.access_token');
-            Route::post('wechat/remote/official/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.jssdk');
+            // Route::get('wechat/remote/official/access_token', 'Api\Wechat\BaseController@getOffciaAccoutAccessToken')->name('api.wechat.remote.access_token');
+            Route::post('wechat/remote/official/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.remote.jssdk');
+            Route::get('wechat/remote/official/userinfo', 'Auth\AuthenticateController@getUserInfoByTicket')->name('api.wechat.remote.userinfo');
         });
 
+
+// ----------测试-------------
+
+Route::get('login/github', function(){
+    // 将用户重定向到Github认证页面
+    return Socialite::driver('github')->redirect();
+})->middleware(['web']);
+Route::get('login/github/callback', function(){
+    // 从Github获取用户信息
+    $user = Socialite::driver('github')->user();
+    dd($user);
+})->middleware(['web']);
+
+
+# routes/web.php
+Route::get('/passport', function () {
+    return view('passport');
+});
+
+Route::get('/redirect', function (){
+    $query = http_build_query([
+        'client_id' => '3',
+        'redirect_uri' => 'https://test.mibao.ltd/auth/callback',
+        'response_type' => 'code',
+        'scope' => '',
+    ]);
+
+    return redirect('https://test.mibao.ltd/oauth/authorize?' . $query);
+});
+
+Route::get('/auth/callback2', function (Request $request){
+    if ($request->get('code')) {
+        return 'Login Success';
+    } else {
+        return 'Access Denied';
+    }
+});   
+
+Route::get('/auth/callback', function (Request $request) {
+    $http = new \GuzzleHttp\Client;
+
+    $response = $http->post('https://test.mibao.ltd/oauth/token?provider=users', [
+        'form_params' => [
+            'grant_type' => 'authorization_code',
+            'client_id' => '3',  // your client id
+            'client_secret' => 'JwKX50fcPbXy6yrKDrL4YO026Z08UrSvIRzwykAd',   // your client secret
+            'redirect_uri' => 'https://test.mibao.ltd/auth/callback',
+            'code' => $request->code,
+        ],
+    ]);
+
+    return json_decode((string) $response->getBody(), true);
+});

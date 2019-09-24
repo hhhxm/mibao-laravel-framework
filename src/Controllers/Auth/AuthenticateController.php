@@ -3,15 +3,17 @@ namespace Mibao\LaravelFramework\Controllers\Auth;
 
 use Auth;
 use GuzzleHttp\Client as Http;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Laravel\Passport\Client;
 use Mibao\LaravelFramework\Controllers\Controller;
 use Mibao\LaravelFramework\Models\WechatUser;
+
+use function GuzzleHttp\json_decode;
 
 class AuthenticateController extends Controller
 {
@@ -61,8 +63,21 @@ class AuthenticateController extends Controller
         Validator::make($request->all(), [
             'ticket' => 'required|string',
         ])->validate();
-        $res = $this->getLoginTicket($request->ticket);
-        return responder()->success(['token' => $res]);
+        $res = $this->getContentByTicket($request->ticket);
+        return $res ? responder()->success(['token' => $res]) : responder()->error('ticket_is_timeout');
+    }
+    /**
+     * 使用ticket获取用户信息
+     * @param  Request $request
+     * @return Response
+     */
+    public function getUserInfoByTicket(Request $request)
+    {
+        Validator::make($request->all(), [
+            'ticket' => 'required|string',
+        ])->validate();
+        $res = $this->getContentByTicket($request->ticket);
+        return $res ? responder()->success(['user' => json_decode($res)]) : responder()->error('ticket_is_timeout');
     }
     /**
      * 登出
@@ -120,22 +135,22 @@ class AuthenticateController extends Controller
      * @param $token     string 模型类型
      * @param $modelId   string 模型id
      */
-    protected function setLoginTicket($token, $modelId)
+    public function setLoginTicket($token, $modelId)
     {
         $ticket = md5($modelId . time());
         $key = env('REDIS_KEY','mibao').":loginTicket:".$ticket;
-        Redis::setex($key, 120, $token);
+        Redis::setex($key, 60, $token);
         return $ticket;
     }
     /**
-     * 用电子票获取token
+     * 用电子票获取内容
      * @param $ticket     string 电子票
      */
-    protected function getLoginTicket($ticket)
+    protected function getContentByTicket($ticket)
     {
         $key = env('REDIS_KEY','mibao').":loginTicket:".$ticket;
-        $token = Redis::get($key);
+        $res = Redis::get($key);
         Redis::del($key);
-        return $token;
+        return $res;
     }
 }

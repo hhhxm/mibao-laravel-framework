@@ -11,12 +11,12 @@ class Logging extends Model
      *
      * @var array
      */
-    protected $fillable = ['model_type', 'model_id', 'server', 'request', 'content','created_at'];
+    protected $fillable = ['model_type', 'model_id', 'type', 'title', 'content','created_at'];
 
     /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
      */
-    protected $visible = ['id', 'server', 'request', 'content','created_at'];
+    protected $visible = ['id', 'type', 'title', 'content','created_at'];
 }

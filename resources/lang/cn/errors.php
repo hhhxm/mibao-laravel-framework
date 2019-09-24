@@ -22,5 +22,6 @@ return [
     'auth_fail' => '认证失败',
     'param_error' => '参数错误',
     'no_in_white_list' => '不在白名单中',
+    'ticket_is_timeout' => '电子票过期',
 
 ];

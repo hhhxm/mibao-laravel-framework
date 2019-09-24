@@ -2,14 +2,12 @@
 
 namespace Mibao\LaravelFramework;
 
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use League\OAuth2\Server\AuthorizationServer;
-use Mibao\LaravelFramework\Controllers\Auth\WeChatController;
 use Mibao\LaravelFramework\Listeners\WeChatUserAuthorizedListener;
 use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
 
@@ -26,14 +24,14 @@ class ServiceProvider extends LaravelServiceProvider
     public function boot()
     {
         $this->setupConfig();
+        (new RouteRegistrar($this->app->router))->all();
 
         // 监听微信用户登录
         Event::listen(WeChatUserAuthorized::class, WeChatUserAuthorizedListener::class);
 
         // Passport Personal Access Token 过期时间设定为一周
         // 参考https://github.com/overtrue/blog/blob/master/_app/_posts/2018-11-01-set-expired-at-for-laravel-passport-personal-access-token.md
-        $this->app->get(AuthorizationServer::class)
-              ->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P3D'));
+        $this->app->get(AuthorizationServer::class)->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P3D'));
 
         // dd($this->app);
 
@@ -60,10 +58,8 @@ class ServiceProvider extends LaravelServiceProvider
             $this->publishes([ __DIR__.'/../database' => database_path("/") ], 'database');
             $this->publishes([ __DIR__.'/../routes' => base_path('routes') ], 'routes');
             $this->publishes([ __DIR__.'/../resources' => base_path('resources') ], 'resources');
-            // $this->publishes([ __DIR__.'/../models' => app_path("/Models") ], 'models');
-            // $this->publishes([ __DIR__.'/../app/Http/Controllers' => app_path("/Controllers") ], 'controllers');
         }
-        $this->loadRoutesFrom(__DIR__.'/routes.php');
+        // $this->loadRoutesFrom(__DIR__.'/routes.php');
         $this->mergeConfigFrom($configPath, 'mibao-framework');
     }
     protected function modifyAuthConfig()

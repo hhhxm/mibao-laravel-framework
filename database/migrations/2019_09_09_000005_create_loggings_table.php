@@ -17,9 +17,10 @@ class CreateLoggingsTable extends Migration
             $table->increments('id');
             $table->string('model_type')->nullable();
             $table->uuid('model_id')->nullable();
-            $table->longText('type')->nullable();
-            $table->longText('content')->nullable();
-            $table->longText('request')->nullable();
+            $table->string('type');
+            $table->string('title')->nullable();
+            $table->longText('content');
+            $table->string('ip')->nullable(); // 用户IP
             $table->timestamps();
 
         });

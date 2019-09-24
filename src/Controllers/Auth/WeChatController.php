@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 // use Illuminate\Support\Facades\Log;
 use Mibao\LaravelFramework\Controllers\Auth\AuthenticateController;
 
@@ -16,13 +17,6 @@ class WeChatController
 {
     use RegistersUsers;
 
-    public function WeChatUserAuthorizedListener($event)
-    {
-        $user = $event->user;
-        $isNew = $event->isNewSession;
-        // $event->account;
-        // static::checkUser($event->user);
-    }
     /**
      * 检查微信用户是否已经注册
      * 未注册：生成新用户
@@ -48,10 +42,17 @@ class WeChatController
             $wechatUser->save();
             // 广播添加新用户
             !$wechatUser->wasRecentlyCreated ? : event(new Registered($wechatUser));
-            // 获取用户token
-            $res = (new AuthenticateController)->loginByWechatOpenid($data['openid']);
+            if(strpos(Route::currentRouteName(), 'wechat.remote') === false){
+                // 获取用户token
+                $res = (new AuthenticateController)->loginByWechatOpenid($data['openid']);
+                $ticket = $res->ticket;
+            }else{
+                // 远程获取用户信息
+                $wechatUser->makeVisible(["openid", "language", "province", "city", "country", "privilege"]);
+                $ticket = (new AuthenticateController)->setLoginTicket($wechatUser, $data['openid']);
+            }
             // 缓存一次用户的apiTicket
-            session()->flash('apiTicket', $res->ticket);
+            session()->flash('apiTicket', $ticket);
 
             DB::commit();
     }
@@ -70,31 +71,5 @@ class WeChatController
         $redirectUrl .= strpos($request->redirectUrl, '#/?') ? '&' : '?';
         $redirectUrl .= 'ticket='.$ticket;
         return responder()->success([$redirectUrl]);
-    }
-    /**
-     * 获取微信access_token
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function getOffciaAccoutAccessToken(Request $request)
-    {
-        return responder()->success(EasyWeChat::officialAccount()->access_token->getToken());
-    }
-    /**
-     * 获取微信JSSDK.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function getJssdk(Request $request)
-    {
-        $officialAccount = EasyWeChat::officialAccount(); // 公众号
-        $apis = $request->apis ? $request->apis : ['onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ',];
-        $debug = $request->debug ? : false;
-
-        !$request->url ? : $officialAccount->jssdk->setUrl($request->url);
-        $jssdk = $officialAccount->jssdk->buildConfig($apis, $debug, false, false);
-
-        return $this->success([ 'jssdk' => $jssdk ]);
     }
 }

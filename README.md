@@ -1,13 +1,15 @@
 # mibao-laravel-framework
 
 快速开发H5项目框架
+
 1. 多用户认证
 2. api响应支持
 3. 微信easywechat框架
 4. 分组权限
 5. api跨域访问
 6. 用户id使用uuid
-7. 路由统一加前缀"do/"
+7. 第三方服务器远程调用微信公众号功能（需要在微信后台添加授权域名）
+8. passport的client_id使用uuid(未完成)
 
 ## 框架要求
 
@@ -84,6 +86,7 @@ php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvid
 ```php
 php artisan vendor:publish --provider="Flugg\Responder\ResponderServiceProvider"
 ```
+
 * 媒体管理
 
 ```php
@@ -91,14 +94,13 @@ php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServicePr
 php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="config"
 ```
 
-
 #### 数据迁移与填充
 
 通过上面的命令，已经把相关文件copy到对应的目录
 
-- models -> \app\Models
-- migrations -> \data\migrations
-- seeds -> \data\seeds
+* database\\* -> \database
+* resources\\* -> \resources
+* routes\\* -> \routes
 
 通过下面的命令把迁移数据，并填充数据
 
@@ -159,9 +161,6 @@ use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
 ```php
     'faker_locale' => 'zh_CN',
 ```
-
-
-
 
 ## 第三方组件说明参考
 
