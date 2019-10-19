@@ -76,7 +76,7 @@ class RouteRegistrar
         $this->forPublic();
         $this->forWechat();
         $this->forPassPort();
-        $this->forTest();
+        // $this->forTest();
     }
     /**
      * 中间件修改、注册.
@@ -120,7 +120,7 @@ class RouteRegistrar
                 // 使用自定义的路由文件
                 ->group($webApiPath);
         }
-        
+
         if(File::exists($apiApiPath)){
             Route::middleware('api')
                 ->prefix(static::getRoutePrefix('api'))
@@ -137,7 +137,7 @@ class RouteRegistrar
     public function forPassPort()
     {
         // Passport身份认证的路由
-        Passport::routes();
+        // Passport::routes();
         // token15天后过期
         Passport::tokensExpireIn(now()->addDays(15));
         // refresh token30天后过期
@@ -210,7 +210,7 @@ class RouteRegistrar
     protected function forTest()
     {
         Route::any('api/test/index', function(){
-            return responder()->success(); 
+            return responder()->success();
         })->middleware(['api']);
 
 
@@ -218,17 +218,17 @@ class RouteRegistrar
             // 将用户重定向到Github认证页面
             return Socialite::driver('github')->redirect();
         })->middleware(['web']);
-        
+
         Route::get('login/github/callback', function(){
             // 从Github获取用户信息
             $user = Socialite::driver('github')->user();
             dd($user);
         })->middleware(['web']);
-        
+
         Route::get('/passport', function () {
             return view('passport');
         });
-        
+
         Route::get('/redirect', function (){
             $query = http_build_query([
                 'client_id' => '3',
@@ -236,18 +236,18 @@ class RouteRegistrar
                 'response_type' => 'code',
                 'scope' => '',
             ]);
-        
+
             return redirect('https://test.mibao.ltd/oauth/authorize?' . $query);
         });
-        
+
         Route::get('/auth/callback2', function (Request $request){
             if ($request->get('code')) {
                 return 'Login Success';
             } else {
                 return 'Access Denied';
             }
-        });   
-        
+        });
+
         Route::get('/auth/callback', function (Request $request) {
             $http = new \GuzzleHttp\Client;
             $response = $http->post('https://test.mibao.ltd/oauth/token?provider=users', [
