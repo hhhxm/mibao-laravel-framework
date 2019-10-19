@@ -15,9 +15,9 @@ class WeChatUserAuthorizedListener
      */
     public function handle(WeChatUserAuthorized $event)
     {
-        $user = $event->user;
-        $isNew = $event->isNewSession;
-        // $event->account;
-        WeChatController::checkUser($event->user);
+        // $user = $event->user;
+        // $isNew = $event->isNewSession;
+        // WeChatController::checkUser($event->user, $event->account);
+        (new WeChatController)->checkUser($event);
     }
 }

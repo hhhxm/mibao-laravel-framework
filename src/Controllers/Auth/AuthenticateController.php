@@ -7,13 +7,20 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\Client;
+use Leonis\Notifications\EasySms\Channels\EasySmsChannel;
 use Mibao\LaravelFramework\Controllers\Controller;
+use Mibao\LaravelFramework\Helpers\RedisHelper;
 use Mibao\LaravelFramework\Models\WechatUser;
+use Mibao\LaravelFramework\Notifications\VerificationCode;
+use Overtrue\EasySms\PhoneNumber;
+use Webpatser\Uuid\Uuid;
 
-use function GuzzleHttp\json_decode;
+// use function GuzzleHttp\json_decode;
+
 
 class AuthenticateController extends Controller
 {
@@ -33,9 +40,9 @@ class AuthenticateController extends Controller
             'name'    => 'required|exists:'.$guardProvider,
             'password' => 'required|between:6,64',
         ])->validate();
-        $res = $this->authenticateByPassowrd($request->name, $request->password, $guardProvider);
+        $res = $this->authenticateByPassword($request->name, $request->password, $guardProvider);
         return $res ? 
-                responder()->success(['accessToken' => $res]) : 
+                responder()()->success(['accessToken' => $res]) : success();
                 responder()->error('auth_fail');
     }
     /**
@@ -47,7 +54,7 @@ class AuthenticateController extends Controller
     {
         $wechatUser = WechatUser::where('openid',$openid)->first();
         $token = $this->authenticateClientPersonal($wechatUser, 'wechat_users', "wechatOpenid:$openid");
-        $ticket = $this->setLoginTicket($token,  $wechatUser->id);
+        $ticket = $this->setUserTicket($token,  $wechatUser->id);
         return (object) [
             'token'  => $token,
             'ticket' => $ticket,
@@ -95,7 +102,7 @@ class AuthenticateController extends Controller
      * 调用密码认证接口获取用户token 
      * 
      */
-    protected function authenticateByPassowrd($username, $password, $provider)
+    protected function authenticateByPassword($username, $password, $provider)
     {
         // 个人感觉通过.env配置太复杂，直接从数据库查更方便
         $client = Client::query()->where('password_client',1)->latest()->first();
@@ -120,7 +127,6 @@ class AuthenticateController extends Controller
             return false;
         }
     }
-
     /**
      * 私人访问令牌，过期设置在ServiceProvider.php里面
      */
@@ -131,11 +137,11 @@ class AuthenticateController extends Controller
         return $user->createToken($tokenName, $scope)->accessToken;
     }
     /**
-     * 生成登录电子票
+     * 生成包含用信息的电子票
      * @param $token     string 模型类型
      * @param $modelId   string 模型id
      */
-    public function setLoginTicket($token, $modelId)
+    public function setUserTicket($token, $modelId)
     {
         $ticket = md5($modelId . time());
         $key = env('REDIS_KEY','mibao').":loginTicket:".$ticket;
@@ -152,5 +158,60 @@ class AuthenticateController extends Controller
         $res = Redis::get($key);
         Redis::del($key);
         return $res;
+    }
+    /**
+     * 未注册用户发送短信验证码
+     *
+     * @return Json
+     */
+    public function smsVerificationCodeByNoModel(Request $request)
+    {
+        Validator::make($request->all(), [
+            'phone' => 'required|mobile',
+        ])->validate();
+        $phonePrefix = $request->phonePrefix ?: '86';
+
+        // 生成验证码，保存到redis
+        $code = mt_rand(1000,9999);
+        $modelId=Uuid::generate(4)->string;
+        (new RedisHelper)->setValue('smsVerificationCode', $code, 'noModel', $modelId, true, 300);
+
+        // Notification::route('mail', 'michael@mibao.ltd')->notify(new VerificationCode($code));
+        Notification::route(
+            EasySmsChannel::class,
+            new PhoneNumber($request->phone, $phonePrefix)
+        )->notify(new VerificationCode($code));
+
+        return responder()->success(['id'=>$modelId, 'code'=>$code]);
+    }
+    /**
+     * 从api验证短信验证码
+     *
+     * @return Json
+     */
+    public function checkSmsVerificationCodeByApi(Request $request)
+    {
+        Validator::make($request->all(), [
+            'code' => 'required|integer',
+            'id'   => 'required|string',
+        ])->validate();
+        return $this->checkSmsVerificationCode($request->code, $request->id) ? 
+            responder()->success() : 
+            responder()->error('sms_code_error');
+    }
+    /**
+     * 验证短信验证码
+     *
+     * @return Boolean
+     */
+    public function checkSmsVerificationCode($code, $modelId)
+    {
+        $redis = new RedisHelper;
+        if($code == $redis->getValue('smsVerificationCode', 'noModel', $modelId, true)){
+            $redis->delValue('smsVerificationCode', 'noModel', $modelId, true);
+            return true;
+        }else{
+            return false;
+        }
     }
 }

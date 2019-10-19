@@ -9,15 +9,30 @@ namespace Mibao\LaravelFramework;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Routing\Registrar as Router;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
+use Laravel\Passport\Bridge\PersonalAccessGrant;
 use Laravel\Passport\Passport;
+use League\OAuth2\Server\AuthorizationServer;
+use Mibao\LaravelFramework\Listeners\WeChatUserAuthorizedListener;
 use Mibao\LaravelFramework\Tests\Middleware\WechatDev;
+use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
 use Overtrue\LaravelWeChat\Middleware\OAuthAuthenticate as WechatOAuthAuthenticate;
 use SMartins\PassportMultiauth\Http\Middleware\AddCustomProvider;
 use SMartins\PassportMultiauth\Http\Middleware\ConfigAccessTokenCustomProvider;
 use SMartins\PassportMultiauth\Http\Middleware\MultiAuthenticate;
 use Socialite;
+
+
+use Mibao\LaravelFramework\Notifications\VerificationCode;
+use Mibao\LaravelFramework\Notifications\UserMessage;
+use Mibao\LaravelFramework\Models\User;
+
+use Illuminate\Support\Facades\Notification;
+use Overtrue\EasySms\PhoneNumber;
+use Leonis\Notifications\EasySms\Channels\EasySmsChannel;
+
 
 class RouteRegistrar
 {
@@ -61,7 +76,7 @@ class RouteRegistrar
         $this->forPublic();
         $this->forWechat();
         $this->forPassPort();
-        // $this->forTest();
+        $this->forTest();
     }
     /**
      * 中间件修改、注册.
@@ -123,8 +138,15 @@ class RouteRegistrar
     {
         // Passport身份认证的路由
         Passport::routes();
+        // token15天后过期
         Passport::tokensExpireIn(now()->addDays(15));
+        // refresh token30天后过期
         Passport::refreshTokensExpireIn(now()->addDays(30));
+        // Passport Personal Access Token 过期时间设定为一周
+        // 参考https://github.com/overtrue/blog/blob/master/_app/_posts/2018-11-01-set-expired-at-for-laravel-passport-personal-access-token.md
+        app()->get(AuthorizationServer::class)->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P3D'));
+
+
         Route::middleware(['oauth.providers'])
             ->prefix(static::getRoutePrefix())
             ->group(function() {
@@ -175,6 +197,10 @@ class RouteRegistrar
                 Route::get('wechat/oauth/userinfo', 'Auth\WeChatController@oauth')->name('wechat.oauth.userinfo');
                 Route::get('wechat/remote/oauth/userinfo', 'Auth\WeChatController@oauth')->name('wechat.remote.oauth.userinfo');
             });
+
+        // 监听微信用户登录事件，用于录入用户信息
+        Event::listen(WeChatUserAuthorized::class, WeChatUserAuthorizedListener::class);
+
     }
    /**
      * 测试相关路由
@@ -183,6 +209,11 @@ class RouteRegistrar
      */
     protected function forTest()
     {
+        Route::any('api/test/index', function(){
+            return responder()->success(); 
+        })->middleware(['api']);
+
+
         Route::get('login/github', function(){
             // 将用户重定向到Github认证页面
             return Socialite::driver('github')->redirect();
@@ -230,6 +261,21 @@ class RouteRegistrar
             ]);
             return json_decode((string) $response->getBody(), true);
         });
+
+        Route::get('test/notification', function(){
+            // User::first()->notify(new InvoicePaid());
+            $user = User::first();
+            $user->unreadNotifications->markAsRead();
+            $user->notify(new UserMessage(1111));
+            // Notification::route(
+            //     EasySmsChannel::class,
+            //     new PhoneNumber(13632333080, 86)
+            // )->notify(new VerificationCode());
+            // echo 111;
+            // dd();
+            return responder()->success($user->notifications);
+        })->middleware(['web']);
+
     }
 }
 

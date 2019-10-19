@@ -18,8 +18,8 @@ class CreateWechatUsersTable extends Migration
             // $table->bigIncrements('id');
             $table->uuid('id');
             $table->uuid('user_id')->nullable();  // 用户ID
-            $table->string('password');
-            $table->string('appid')->nullable();  // 公众号id
+            $table->string('appid');  // 应用id
+            $table->string('app_type');  // 应用类型，公众号、小程序等
             $table->string('openid')->unique();  // 用户的唯一标识
             $table->string('nickname')->nullable();  // 用户昵称
             $table->string('sex')->nullable();  // 用户的性别，值为1时是男性，值为2时是女性，值为0时是未知
@@ -31,7 +31,7 @@ class CreateWechatUsersTable extends Migration
             $table->string('privilege')->nullable();  // 用户特权信息，json 数组，如微信沃卡用户为（chinaunicom）
             $table->string('unionid')->nullable();  // 只有在用户将公众号绑定到微信开放平台帐号后，才会出现该字段。
             $table->timestamps();
-            $table->index(['user_id','openid']);
+            $table->index(['user_id','openid','appid']);
         });
     }
 

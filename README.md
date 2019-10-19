@@ -1,3 +1,10 @@
+<!--
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-09-05 22:11:39
+ * @LastEditTime: 2019-09-05 22:11:39
+ * @LastEditors: your name
+ -->
 # mibao-laravel-framework
 
 快速开发H5项目框架
@@ -8,8 +15,8 @@
 4. 分组权限
 5. api跨域访问
 6. 用户id使用uuid
-7. 第三方服务器远程调用微信公众号功能（需要在微信后台添加授权域名）
-8. passport的client_id使用uuid(未完成)
+7. passport的client_id使用uuid
+8. 第三方服务器远程调用微信公众号功能（需要在微信后台添加授权域名）
 
 ## 框架要求
 
@@ -94,6 +101,12 @@ php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServicePr
 php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="config"
 ```
 
+* laravel 通知数据库
+
+```php
+php artisan notifications:table
+```
+
 #### 数据迁移与填充
 
 通过上面的命令，已经把相关文件copy到对应的目录
@@ -109,6 +122,14 @@ php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServicePr
 php artisan migrate:refresh --seeder=MibaoDatabaseSeeder
 // 安装passport
 php artisan passport:install
+```
+
+#### 测试数据生成
+
+在php artisan tinx里面，可以直接生成
+
+```php
+factory(Mibao\LaravelFramework\Models\WechatUser::class,50)->create()
 ```
 
 #### 排除微信相关的路由
@@ -175,6 +196,7 @@ use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
 [Laravel 使用 UUID 作为用户表主键并使用自定义用户表字段](https://nova.moe/laravel-use-uuid-as-primary-key-with-custom-authentication-fields/)
 [Implement UUID on Authentication Built-in Laravel 5.7](https://medium.com/@didin.ahmadi/implement-uuid-on-authentication-built-in-laravel-5-7-e289e6a5a9a5)
 [Error Log Problems When Using Laravel Passport for User Login Authentication](https://laracasts.com/discuss/channels/laravel/error-log-problems-when-using-laravel-passport-for-user-login-authentication?page=1)
+[Using UUID Client IDs in Laravel Passport](https://mlo.io/blog/2018/08/17/laravel-passport-uuid/)
 
 ## License
 

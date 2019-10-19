@@ -13,12 +13,16 @@ class ChangeFieldsUsersTable extends Migration
      */
     public function up()
     {
+        // user_id由整数型改成uuid型
         Schema::table('users', function (Blueprint $table) {
             $table->primary('id');
             $table->string('id', 36)->change();
+            $table->dropUnique('users_email_unique');
+            $table->string('email')->change()->unique()->nullable();
             $table->string('phone')->unique()->nullable()->after('email_verified_at');
             $table->string('avatar')->nullable()->after('password');
             $table->string('active')->default(0)->after('avatar');
+
         });
         Schema::table('model_has_roles', function (Blueprint $table) {
             $table->string('model_id', 36)->change();
@@ -38,6 +42,25 @@ class ChangeFieldsUsersTable extends Migration
         Schema::table('media', function (Blueprint $table) {
             $table->string('model_id', 36)->change();
         });
+        Schema::table('notifications', function (Blueprint $table) {
+            $table->string('notifiable_id', 36)->change();
+            $table->index('id');
+        });
+
+        
+        // passport client_id由整数型改成uuid型
+/*         Schema::table('oauth_clients', function (Blueprint $table) {
+            $table->string('id', 36)->change();
+        });
+        Schema::table('oauth_auth_codes', function (Blueprint $table) {
+            $table->string('client_id', 36)->change();
+        });
+        Schema::table('oauth_access_tokens', function (Blueprint $table) {
+            $table->string('client_id', 36)->change();
+        });
+        Schema::table('oauth_personal_access_clients', function (Blueprint $table) {
+            $table->string('client_id', 36)->change();
+        }); */
     }
 
     /**

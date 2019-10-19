@@ -26,8 +26,8 @@ class BaseController
     public function getJssdk(Request $request)
     {
         $officialAccount = EasyWeChat::officialAccount(); // 公众号
-        $url = $request->url;
-        $apis = $request->apis ? $request->apis : ['onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ',];
+        $url   = $request->url;
+        $apis  = $request->apis ? $request->apis : ['onMenuShareTimeline', 'onMenuShareAppMessage', 'onMenuShareQQ',];
         $debug = $request->debug ? true : false;
 
         if($url) $officialAccount->jssdk->setUrl($url);

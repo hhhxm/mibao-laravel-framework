@@ -5,14 +5,46 @@ namespace Mibao\LaravelFramework\Controllers\Auth;
 use Mibao\LaravelFramework\Models\WechatUser;
 use EasyWeChat;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 // use Illuminate\Support\Facades\Log;
 use Mibao\LaravelFramework\Controllers\Auth\AuthenticateController;
+use Mibao\LaravelFramework\Controllers\Controller;
 
-class UserController
+class UserController extends Controller
 {
+    use RegistersUsers;
+    /**
+     * Get a validator for an incoming registration request.
+     *
+     * @param  array  $data
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    protected function validator(array $data)
+    {
+        return Validator::make($data, [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+    }
+
+    /**
+     * Create a new user instance after a valid registration.
+     *
+     * @param  array  $data
+     * @return \App\User
+     */
+    protected function create(array $data)
+    {
+        return User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+    }
     /**
      * api注册普通用户
      *
@@ -30,30 +62,15 @@ class UserController
         return $this->registered($request, $user)
                         ?: redirect($this->redirectPath());
     }
-
-    public static function checkUser($socialteuse)
+    /**
+     * The user has been registered.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  mixed  $user
+     * @return mixed
+     */
+    protected function registered(Request $request, $user)
     {
-        // 微信用户数据
-        $data = $socialteuse->getOriginal();
-        if(isset($data['openid'])){
-            DB::beginTransaction();
-
-            // 判断openid是否存在用户存，有就更新，没就新建
-            $wechatUser = WechatUser::lockForUpdate()->firstOrNew([
-                'openid' => $data['openid'],
-            ]);
-            $wechatUser->fill($data);
-            $wechatUser->exists ?: $wechatUser->password = Hash::make(strrev($data['openid']));
-            $wechatUser->save();
-            // 广播添加新用户
-            !$wechatUser->wasRecentlyCreated ? : event(new Registered($wechatUser));
-            // 获取用户token
-            $res = (new AuthenticateController)->loginByWechatOpenid($data['openid']);
-            // 缓存一次用户的apiTicket
-            session()->flash('apiTicket', $res->ticket);
-
-            DB::commit();
-        }
+        //
     }
-
 }

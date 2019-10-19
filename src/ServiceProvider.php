@@ -1,15 +1,15 @@
 <?php
-
+/**
+ * TODO:
+ * FIXME:
+ */
 namespace Mibao\LaravelFramework;
 
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
-use Laravel\Passport\Bridge\PersonalAccessGrant;
-use League\OAuth2\Server\AuthorizationServer;
-use Mibao\LaravelFramework\Listeners\WeChatUserAuthorizedListener;
-use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
+use Illuminate\Support\Facades\Validator;
+use Laravel\Passport\Client;
 
 /**
  * Class ServiceProvider.
@@ -23,19 +23,27 @@ class ServiceProvider extends LaravelServiceProvider
      */
     public function boot()
     {
+        // 设置参数
         $this->setupConfig();
+
+        // 设置路由
         (new RouteRegistrar($this->app->router))->all();
 
-        // 监听微信用户登录
-        Event::listen(WeChatUserAuthorized::class, WeChatUserAuthorizedListener::class);
-
-        // Passport Personal Access Token 过期时间设定为一周
-        // 参考https://github.com/overtrue/blog/blob/master/_app/_posts/2018-11-01-set-expired-at-for-laravel-passport-personal-access-token.md
-        $this->app->get(AuthorizationServer::class)->enableGrantType(new PersonalAccessGrant(), new \DateInterval('P3D'));
-
-        // dd($this->app);
-
+        // 设置认证
         $this->modifyAuthConfig();
+        
+        // dd($this->app);
+        // 因为passport client采用了uuid，所以需要取消自增长id，改为实时生成uuid
+        /* Client::creating(function (Client $client) {
+            $client->incrementing = false;
+            $client->id = \Ramsey\Uuid\Uuid::uuid4()->toString();
+        }); */
+
+        // 增加手机检验规则
+        Validator::extend('mobile', function($attribute, $value, $parameters) {
+            return preg_match('/^((13[0-9])|(14[5,7,9])|(15[^4])|(18[0-9])|(17[0,1,3,5,6,7,8]))\d{8}$/', $value);
+        });
+
     }
     
     /**

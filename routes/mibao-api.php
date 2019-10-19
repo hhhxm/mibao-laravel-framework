@@ -16,13 +16,21 @@ use Mibao\LaravelFramework\RouteRegistrar;
 /*
   认证管理
 */
-Route::group(['middleware' => ['api','throttle:10,1']], function () {
+Route::group(['middleware' => ['api','throttle:100,1']], function () {
   // 帐号密码登录
   Route::post('auth/login', 'Auth\AuthenticateController@login')->name('api.login');
-  // 第三方谁跳转后，使用一次性ticket登录
+  // 第三方谁跳转后，使用一次性ticket获取token
   Route::get('auth/ticket', 'Auth\AuthenticateController@getTokenByTicket')->name('api.login.ticket');
   // 注册
-  // Route::post('register', 'Admin\AuthenticateController@register')')->name('api.register');
+  Route::post('auth/register', 'Auth\RegisterController@register')->name('api.register');
+  // 微信小程序登录
+  Route::post('auth/miniProgram/login', 'Auth\MiniProgramController@login')->name('api.miniProgram.login');
+  // 检查验证码
+  Route::post('sms/code/check', 'Auth\AuthenticateController@checkSmsVerificationCodeByApi')->name('api.register.smsCode');
+});
+Route::group(['middleware' => ['api','throttle:100,1']], function () {
+  // 注册手机验证码
+  Route::post('sms/code/register', 'Auth\AuthenticateController@smsVerificationCodeByNoModel')->name('api.register.smsCode');
 });
 
 /*
@@ -30,12 +38,11 @@ Route::group(['middleware' => ['api','throttle:10,1']], function () {
 */
 Route::group(['middleware' => ['multiauth:wechat']], function () {
   // 用户个人信息
-  Route::post('wechat/local/upload_avatar', 'Api\Wechat\UserController@uploadAvatar');
-  Route::apiResource('wechat/local/user', 'Api\Wechat\UserController', ['only' => ['index','show']]);
-  // 记录分享
-  Route::post('wechat/local/share', 'Api\Wechat\ShareController@store')->name('api.wechat.share');
+  Route::post('wechat/setPhoneNumber', 'Api\Wechat\UserController@setPhoneNumber');
+  Route::post('wechat/upload_avatar', 'Api\Wechat\UserController@uploadAvatar');
+  Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['index','show']]);
   // 微信JSSDK
-  Route::post('wechat/local/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.jssdk');
+  Route::post('wechat/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.jssdk');
   // 错误记录接口
   Route::apiResource('logging', 'LoggingController', ['only' => ['store']]);
   // 登出，必须登录后才能调用，否则出错。
@@ -57,6 +64,7 @@ Route::group(['middleware' => ['multiauth:api']], function () {
 Route::group(['middleware' => [Mibao\LaravelFramework\Middleware\WechatRemotePremission::class]], function () {
       // 获取access_token，不安全，最好不要远程调用
       // Route::get('wechat/remote/official/access_token', 'Api\Wechat\BaseController@getOffciaAccoutAccessToken')->name('api.wechat.remote.access_token');
+      // 使用一次性电子票获取用户信息，不需要api token
       Route::get('wechat/remote/official/userinfo', 'Auth\AuthenticateController@getUserInfoByTicket')->name('api.wechat.remote.userinfo');
       Route::post('wechat/remote/official/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.remote.jssdk');
     });

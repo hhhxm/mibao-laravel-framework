@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 // use Illuminate\Support\Facades\Log;
 use Mibao\LaravelFramework\Controllers\Auth\AuthenticateController;
+use Overtrue\LaravelWeChat\Events\WeChatUserAuthorized;
 
 class WeChatController
 {
@@ -26,39 +27,50 @@ class WeChatController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public static function checkUser($socialteuse)
+    public function checkUser(WeChatUserAuthorized $event)
     {
-        // 微信用户数据
-        $data = $socialteuse->getOriginal();
-        if(isset($data['openid'])){
+        if($event->isNewSession || env('APP_DEBUG')){
+            $this->register($event->user->getOriginal(), $event->account);
+        };
+    }
+    public function register($userData, $account='default', $apptype='official_account')
+    {
+        if(isset($userData['openid'])){
             DB::beginTransaction();
 
             // 判断openid是否存在用户存，有就更新，没就新建
-            $wechatUser = WechatUser::lockForUpdate()->firstOrNew([
-                'openid' => $data['openid'],
+            $wechatUser = WechatUser::lockForUpdate()->firstOrCreate([
+                'openid' => $userData['openid'],
+                'appid'  => config("wechat.$apptype.$account.app_id"),
+                'app_type'   => $apptype,
             ]);
-            $wechatUser->fill($data);
-            $wechatUser->exists ?: $wechatUser->password = Hash::make(strrev($data['openid']));
+            $wechatUser->fill($userData);
             $wechatUser->save();
             // 广播添加新用户
             !$wechatUser->wasRecentlyCreated ? : event(new Registered($wechatUser));
             if(strpos(Route::currentRouteName(), 'wechat.remote') === false){
                 // 获取用户token
-                $res = (new AuthenticateController)->loginByWechatOpenid($data['openid']);
+                $res = (new AuthenticateController)->loginByWechatOpenid($userData['openid']);
                 $ticket = $res->ticket;
+                $token = $res->token;
             }else{
                 // 远程获取用户信息
                 $wechatUser->makeVisible(["openid", "language", "province", "city", "country", "privilege"]);
-                $ticket = (new AuthenticateController)->setLoginTicket($wechatUser, $data['openid']);
+                $ticket = (new AuthenticateController)->setUserTicket($wechatUser, $userData['openid']);
             }
             // 缓存一次用户的apiTicket
             session()->flash('apiTicket', $ticket);
 
             DB::commit();
-    }
+            return (Object) [
+                'user' => $wechatUser,
+                'token' => $token,
+                'ticket' => $ticket,
+            ];
+        }
     }
     /**
-     * 微信认证
+     * 微信公众号认证
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -72,4 +84,5 @@ class WeChatController
         $redirectUrl .= 'ticket='.$ticket;
         return responder()->success([$redirectUrl]);
     }
+
 }

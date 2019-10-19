@@ -23,5 +23,6 @@ return [
     'param_error' => '参数错误',
     'no_in_white_list' => '不在白名单中',
     'ticket_is_timeout' => '电子票过期',
+    'sms_code_error' => '短信验证码过期或者无效',
 
 ];

@@ -16,18 +16,19 @@ use Faker\Generator as Faker;
 |
 */
 
-$factory->define(User::class, function (Faker $faker) {
+$factory->define(WechatUser::class, function (Faker $faker) {
     $openid = $faker->uuid;
     return [
         'appid' => 'mibao',
+        'app_type' => 'mibao',
         'openid' => $openid,
-        'password' => $openid,
         'nickname' => $faker->name,
         'sex' => (int) $faker->biasedNumberBetween($min = 0, $max = 2, $function = 'sqrt'),
         'language' => 'zh',
         'province' => $faker->state,
         'city' => $faker->city,
         'country' => '中国',
-        'headimgurl' => $faker->url,
+        // 'headimgurl' => $faker->url,
+        'headimgurl' => 'https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTI9CtlyPG1qp6xDMfPZGCQSKMuNK8NBdUrlIavHGCTbCuHic8AaZboD6umGnlmcvicsTYt16qm6pNyg/132',
     ];
 });

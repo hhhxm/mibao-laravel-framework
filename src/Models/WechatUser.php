@@ -28,20 +28,20 @@ class WechatUser extends Authenticatable implements HasMedia
     /*
      * 添加属性
      */
-    // protected $appends = ['rank','top_work','have_work'];
+    protected $appends = ['avatarUrl'];
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['openid', 'nickname', 'sex', 'language', 'province', 'city', 'country', 'headimgurl', 'privilege', 'unionid', ];
+    protected $fillable = ['appid', 'app_type', 'openid', 'nickname', 'sex', 'language', 'province', 'city', 'country', 'headimgurl', 'privilege', 'unionid', ];
     /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
      */
     // protected $hidden = [ 'openid', 'language', 'province', 'city', 'country', 'privilege', 'unionid', ];
-    protected $visible = ['nickname', 'headimgurl', 'sex', 'rank'];
+    protected $visible = ['id','nickname', 'headimgurl', 'sex', 'user'];
     /**
      * 应该被转化为原生类型的属性
      *
@@ -143,20 +143,6 @@ class WechatUser extends Authenticatable implements HasMedia
             $model{$model->getKeyName()} = (string) Uuid::generate(4);
         });
     }
-    public function registerMediaCollections()
-    {
-        $this
-            // ->addMediaCollection('avatar')
-            // ->singleFile()
-            // ->useDisk('oss')
-            // ->registerMediaConversions(function (Media $media) {
-            //     $this
-            //         ->addMediaConversion('thumb')
-            //         ->width(100)
-            //         ->height(100);
-            // })
-            ;
-    }
     /**
      * 可以认证字段
      *
@@ -164,6 +150,15 @@ class WechatUser extends Authenticatable implements HasMedia
     public function findForPassport($username)
     {
         return $this->orWhere('openid', $username)->orWhere('nickname', $username)->first();
+    }
+    /**
+     * 获取手机对应的用户
+     */
+    public function user(){
+        return $this->belongsTo('Mibao\LaravelFramework\Models\User', 'user_id', 'id');
+        // return $this->hasOne('Mibao\LaravelFramework\Models\User', 'user_id', 'id');
+        // return $this->hasOne('Mibao\LaravelFramework\Models\User', 'id', 'user_id');
+        // return $this->hasMany('Mibao\LaravelFramework\Models\WechatUser', 'id', 'user_id');
     }
 
 }
