@@ -24,13 +24,14 @@ class UsersTableSeeder extends Seeder
       $model->save();
       $model->assignRole('super-admin');
 
-      // $model = new Admin;
-      // $model->name = 'admin';
-      // $model->email = 'admin@localhost.com';
-      // $model->phone = '13888888889';
-      // $model->password = Hash::make('%^$025!@#');
-      // $model->save();
-      // $model->assignRole('data admin');
+      $model = new Admin;
+      $model->name = 'admin';
+      $model->email = 'admin@localhost.com';
+      $model->phone = '13888888889';
+      $model->avatar = 'http://thirdwx.qlogo.cn/mmopen/vi_32/yMAjo9GGg9D0DkpOTJ901zKS5th9ZFPG1xkwQZBLJ4TKxPWsZmQUGM6h2ZIFykicWdJlNY3gibN15HSQiaR7EgMqw/132';
+      $model->password = Hash::make('%^$025!@#');
+      $model->save();
+      $model->assignRole('admin');
 
       $user = new User;
       $user->name = 'michael';

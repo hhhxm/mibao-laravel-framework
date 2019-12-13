@@ -31,7 +31,7 @@ class ServiceProvider extends LaravelServiceProvider
 
         // 设置认证
         $this->modifyAuthConfig();
-        
+
         // dd($this->app);
         // 因为passport client采用了uuid，所以需要取消自增长id，改为实时生成uuid
         /* Client::creating(function (Client $client) {
@@ -45,7 +45,7 @@ class ServiceProvider extends LaravelServiceProvider
         });
 
     }
-    
+
     /**
      * Register the provider.
      */
@@ -59,7 +59,7 @@ class ServiceProvider extends LaravelServiceProvider
     protected function setupConfig()
     {
         $configPath = realpath(__DIR__.'/config.php');
-        
+
         if ($this->app->runningInConsole()) {
             // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
             $this->publishes([ $configPath => config_path('mibao-framework.php') ], 'config');

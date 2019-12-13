@@ -29,25 +29,30 @@ trait Utils
      */
     public function conditionsPaginate($model, $request)
     {
-        $paging   = $request->input('paging') ? : true;
-        $limit    = $request->input('limit') ? : 30;
-        $orderBy  = $request->input('orderBy') ? : null;
-        $sort     = $request->input('sort') ? : 'DESC';
-        $timeDiff = $request->input('timeDiff') ? : null;
+        $paging    = $request->paging == 'false' ? false: true;
+        $limit     = $request->limit ? $request->limit : 30;
+        $orderName = $request->orderName;
+        $order     = $request->order ? : 'DESC';
+        $startDate = $request->startDate;
+        $endDate   = $request->endDate;
 
-        if(isset($timeDiff[0])){
-            $model->where('created_at', '>=',now()->parse($timeDiff[0])->startOfDay());
+        if($startDate){
+            $model->where('created_at', '>=',now()->parse($startDate)->startOfDay());
         }
-        if(isset($timeDiff[1])){
-            $model->where('created_at', '<=',now()->parse($timeDiff[1])->endOfDay());
+        if($endDate){
+            $model->where('created_at', '<=',now()->parse($endDate)->endOfDay());
         }
-        if($orderBy){
-            $model->orderBy($orderBy, $sort);
+        if($orderName){
+            $model->orderBy($orderName, $order);
         }
+        // dd($paging);
+        // return [$paging,$limit];
         if($paging){
+            ini_set('memory_limit', '512M');
             return $model->paginate($limit);
         }else{
             return $this->noPaginate($model);
+            // return $model->get();
         }
     }
     /**
@@ -57,11 +62,15 @@ trait Utils
      */
     public function noPaginate($model)
     {
-        ini_set ('memory_limit', '512M');
-        $datas = [];
-        $model->chunk(5000, function($items) use($datas) {
-            $datas =  array_merge($items->all(), $datas);
-        });
-        return $datas;
+        ini_set('memory_limit', '-1');
+        // ini_set ('memory_limit', '2G');
+        return $model->get();
+
+        // 分组处理太慢了
+        // $datas=[];
+        // $model->chunk(50000, function($items) use(&$datas) {
+            // $datas =  array_merge($items->all(), $datas);
+        // });
+        // return $datas;
     }
 }

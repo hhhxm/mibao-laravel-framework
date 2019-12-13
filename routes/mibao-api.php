@@ -72,8 +72,8 @@ Route::group(['middleware' => [Mibao\LaravelFramework\Middleware\WechatRemotePre
   后台管理员API
 */
 Route::group(['middleware' => ['multiauth:admin']], function () {
-  // Route::get('admin/admin/info', 'Admin\AdminController@user_info');
-  // Route::apiResource('admin/admin', 'Admin\AdminController');
+    Route::get('admin/user/info', 'Admin\UserController@user_info');
+    Route::apiResource('admin/user', 'Admin\AdminController');
 
   // Route::delete('admin/role', 'Admin\RoleController@destroy');
   // Route::apiResource('admin/role', 'Admin\RoleController');
@@ -82,5 +82,5 @@ Route::group(['middleware' => ['multiauth:admin']], function () {
   // Route::apiResource('admin/permission', 'Admin\PermissionController');
 
   // Route::get('admin/count', 'Admin\WorkController@count');
-  
+
 });

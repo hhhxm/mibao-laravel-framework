@@ -41,9 +41,10 @@ class AuthenticateController extends Controller
             'password' => 'required|between:6,64',
         ])->validate();
         $res = $this->authenticateByPassword($request->name, $request->password, $guardProvider);
-        return $res ? 
-                responder()()->success(['accessToken' => $res]) : success();
-                responder()->error('auth_fail');
+        // return $res ?
+        //         responder()->success(['accessToken' => $res]) :
+        //         responder()->success();
+        return responder()->success(['accessToken' => $res]);
     }
     /**
      * 微信登录
@@ -99,8 +100,8 @@ class AuthenticateController extends Controller
     }
 
     /**
-     * 调用密码认证接口获取用户token 
-     * 
+     * 调用密码认证接口获取用户token
+     *
      */
     protected function authenticateByPassword($username, $password, $provider)
     {
@@ -118,6 +119,7 @@ class AuthenticateController extends Controller
                 'provider' => $provider,
             ],
         ];
+        // dd($url,$data);
         try {
             $http = new Http();
             $res = $http->request('POST', $url, $data);
@@ -195,8 +197,8 @@ class AuthenticateController extends Controller
             'code' => 'required|integer',
             'id'   => 'required|string',
         ])->validate();
-        return $this->checkSmsVerificationCode($request->code, $request->id) ? 
-            responder()->success() : 
+        return $this->checkSmsVerificationCode($request->code, $request->id) ?
+            responder()->success() :
             responder()->error('sms_code_error');
     }
     /**

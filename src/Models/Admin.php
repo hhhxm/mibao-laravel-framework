@@ -15,10 +15,10 @@ class Admin extends Authenticatable
     use HasRoles;
     // protected $guard_name = 'admin';
 
-    // set to false, so we tell that primary-key field 
-    // not auto incrementing anymore 
+    // set to false, so we tell that primary-key field
+    // not auto incrementing anymore
     public $incrementing = false;
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -36,7 +36,7 @@ class Admin extends Authenticatable
         'password', 'remember_token',
     ];
 */
-    protected $visible = ['id', 'name', 'email', 'phone', 'created_at', 'roles'];
+    protected $visible = ['id', 'name', 'avatar', 'created_at', 'roles'];
 
     /**
      * 生成新模型时，生成uuid

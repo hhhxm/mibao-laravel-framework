@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace Mibao\LaravelFramework\Controllers\Admin;
 
 use App\Models\Admin;
 use Illuminate\Http\Request;
-use App\Http\Controllers\ApiController;
+use Mibao\LaravelFramework\Controllers\Controller;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Auth;
 use Log;
 
-class AdminController extends ApiController
+class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -29,9 +29,9 @@ class AdminController extends ApiController
         $res = array(
             'roles' => ['admin'],
             'info' => $user,
-            // 'permissions' => $user->getAllPermissions(),
+            'permissions' => $user->getAllPermissions(),
         );
-        return $this->success($res);
+        return responder()->success($res);
     }
 
     /**
@@ -90,7 +90,7 @@ class AdminController extends ApiController
           $admin->removeRole($roleName);
         }
         $admin->assignRole($request->role_ids);
-        return $this->success(1);
+        return responder()->success();
     }
 
     /**
