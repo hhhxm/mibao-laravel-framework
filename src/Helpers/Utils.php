@@ -2,10 +2,12 @@
 
 namespace Mibao\LaravelFramework\Helpers;
 
+use Carbon\Carbon;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Log;
 use Mibao\LaravelFramework\Models\Logs as LogsModel;
-
 
 trait Utils
 {
@@ -29,7 +31,7 @@ trait Utils
      */
     public function conditionsPaginate($model, $request)
     {
-        $paging    = $request->paging == 'false' ? false: true;
+        $paging    = $request->paging === 'false' || $request->paging === false ? false: true;
         $limit     = $request->limit ? $request->limit : 30;
         $orderName = $request->orderName;
         $order     = $request->order ? : 'DESC';
@@ -45,10 +47,11 @@ trait Utils
         if($orderName){
             $model->orderBy($orderName, $order);
         }
+        // Log::debug($paging);
         // dd($paging);
         // return [$paging,$limit];
         if($paging){
-            ini_set('memory_limit', '512M');
+            ini_set('memory_limit', '1G');
             return $model->paginate($limit);
         }else{
             return $this->noPaginate($model);

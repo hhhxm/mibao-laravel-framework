@@ -24,28 +24,23 @@ Laravel >= 5.8
 
 ## 安装
 
+### 安装laravel
+
+```shell
+composer create-project --prefer-dist laravel/laravel api "5.8.*"
+```
+
+### 安装米宝插件
+
 ```shell
 composer require "mibao/laravel-framework"
 ```
 
+### 如出现文件不存在，用touch新建后，再执行后面的流程
+
 ## 配置
 
-### Laravel 应用
-
-<!-- 1. 在 `config/app.php` 注册 ServiceProvider 和 Facade (Laravel 5.5 + 无需手动注册)
-
-```php
-'providers' => [
-    // ...
-    Overtrue\LaravelWeChat\ServiceProvider::class,
-],
-'aliases' => [
-    // ...
-    'EasyWeChat' => Overtrue\LaravelWeChat\Facade::class,
-],
-``` -->
-
-#### 相关配置文件
+### 相关配置文件
 
 * Mibao设置
 
@@ -107,7 +102,7 @@ php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServicePr
 php artisan notifications:table
 ```
 
-#### 数据迁移与填充
+### 数据迁移与填充
 
 通过上面的命令，已经把相关文件copy到对应的目录
 
@@ -124,7 +119,7 @@ php artisan migrate:refresh --seeder=MibaoDatabaseSeeder
 php artisan passport:install
 ```
 
-#### 测试数据生成
+### 测试数据生成
 
 在php artisan tinx里面，可以直接生成
 
@@ -132,7 +127,7 @@ php artisan passport:install
 factory(Mibao\LaravelFramework\Models\WechatUser::class,50)->create()
 ```
 
-#### 排除微信相关的路由
+### 排除微信相关的路由
 
 在中间件 `App\Http\Middleware\VerifyCsrfToken` 排除微信相关的路由，如：
 
@@ -143,7 +138,7 @@ protected $except = [
 ];
 ```
 
-#### 修改原laravel框架的配置
+### 修改原laravel框架的配置
 
 * 关闭默认路由，否则会出现双重路由，把/config/app.php里面的RouteServiceProvider注释掉
 

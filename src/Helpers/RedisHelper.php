@@ -42,12 +42,11 @@ class RedisHelper
      */
     protected function getRedisKey($keyName, $modelType=null, $modelId=null, $requestDate=false)
     {
-        $key = env('REDIS_KEY','mibao').":";
-        // $key .= "$prefix:";
+        $key = env('REDIS_KEY','mibao').':';
         !$requestDate ?: $key .= $this->dateString().":";
-        $key .= "$keyName:";
-        !$modelType ?: $key .= "$modelType:";
-        !$modelId ?: $key .= "$modelId:";
+        $key .= "$keyName";
+        !$modelType ?: $key .= ":$modelType";
+        !$modelId ?: $key .= ":$modelId";
         return $key;
     }
     /**
@@ -86,4 +85,18 @@ class RedisHelper
         $key = $this->getRedisKey($keyName, $modelType, $modelId, $requestDate);
         Redis::del($key);
     }
+    /**
+     * 获取所有缓存信息
+     * @param $keyword   string 关键字
+     */
+    public function getAllValue($keyword='')
+    {
+        $key = env('REDIS_KEY','mibao').":$keyword*";
+        $res = Redis::keys($key);
+        foreach ($res as &$value) {
+            $value= preg_replace('/laravel\_database\_(.*)/i', '$1', $value);
+        }
+        return $res;
+    }
+
 }

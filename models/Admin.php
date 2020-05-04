@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Mibao\LaravelFramework\Models\Admin as Models;
+use Mibao\LaravelFramework\Models\User as Models;
 
 class Admin extends Models
 {

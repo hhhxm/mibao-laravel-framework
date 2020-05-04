@@ -2,6 +2,7 @@
 namespace Mibao\LaravelFramework\Controllers\Auth;
 
 use Auth;
+use DB;
 use GuzzleHttp\Client as Http;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
@@ -40,11 +41,13 @@ class AuthenticateController extends Controller
             'name'    => 'required|exists:'.$guardProvider,
             'password' => 'required|between:6,64',
         ])->validate();
+
         $res = $this->authenticateByPassword($request->name, $request->password, $guardProvider);
-        // return $res ?
-        //         responder()->success(['accessToken' => $res]) :
-        //         responder()->success();
-        return responder()->success(['accessToken' => $res]);
+        if($res){
+            $user = DB::table($guardProvider)->where('name',$request->name)->first();
+        }
+        return $res ? responder()->success(['accessToken' => $res, 'userId'=>$user->id]):
+                      responder()->error('auth_fail')->respond(400);
     }
     /**
      * 微信登录

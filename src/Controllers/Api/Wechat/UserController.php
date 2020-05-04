@@ -21,7 +21,9 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $model = WechatUser::orderby('created_at','DESC');
-        return responder()->success($this->conditionsPaginate($model, $request));
+        $res = $this->conditionsPaginate($model, $request);
+        $res->makeVisible('openid');
+        return responder()->success($res);
     }
 
     /**
@@ -103,7 +105,7 @@ class UserController extends Controller
         $wechatUser->user()->associate($user);
         $wechatUser->save();
 
-        
+
 
         return responder()->success($wechatUser);
 

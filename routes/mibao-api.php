@@ -40,7 +40,7 @@ Route::group(['middleware' => ['multiauth:wechat']], function () {
   // 用户个人信息
   Route::post('wechat/setPhoneNumber', 'Api\Wechat\UserController@setPhoneNumber');
   Route::post('wechat/upload_avatar', 'Api\Wechat\UserController@uploadAvatar');
-  Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['index','show']]);
+  Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['show']]);
   // 微信JSSDK
   Route::post('wechat/jssdk', 'Api\Wechat\BaseController@getJssdk')->name('api.wechat.jssdk');
   // 错误记录接口
@@ -51,7 +51,7 @@ Route::group(['middleware' => ['multiauth:wechat']], function () {
 
 Route::group(['middleware' => ['multiauth:api']], function () {
   // 用户个人信息
-//   Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['index','show']]);
+  // Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['index','show']]);
     Route::get('user/info', function(Request $request){
         // dd(Auth::user());
         return responder()->success();
@@ -72,8 +72,9 @@ Route::group(['middleware' => [Mibao\LaravelFramework\Middleware\WechatRemotePre
   后台管理员API
 */
 Route::group(['middleware' => ['multiauth:admin']], function () {
-    Route::get('admin/user/info', 'Admin\UserController@user_info');
-    Route::apiResource('admin/user', 'Admin\AdminController');
+    // Route::get('admin/user/info', 'Admin\UserController@user_info');
+    Route::apiResource('admin/user', 'Admin\UserController');
+    Route::apiResource('wechat/user', 'Api\Wechat\UserController', ['only' => ['index']]);
 
   // Route::delete('admin/role', 'Admin\RoleController@destroy');
   // Route::apiResource('admin/role', 'Admin\RoleController');
@@ -84,3 +85,5 @@ Route::group(['middleware' => ['multiauth:admin']], function () {
   // Route::get('admin/count', 'Admin\WorkController@count');
 
 });
+
+Route::post('admin/model/summary', 'Admin\SummaryController@modelSummaryByTimeSize');

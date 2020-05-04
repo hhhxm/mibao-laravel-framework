@@ -60,6 +60,7 @@ class WeChatController
             }
             // 缓存一次用户的apiTicket
             session()->flash('apiTicket', $ticket);
+            session()->flash('userId', $wechatUser->id);
 
             DB::commit();
             return (Object) [
@@ -78,11 +79,13 @@ class WeChatController
     public function oauth(Request $request)
     {
         $ticket = session('apiTicket');
+        $userId = session('userId');
         // 回调地址加上ticket
         $redirectUrl  = $request->redirectUrl ? : env("APP_URL");
-        $redirectUrl .= strpos($request->redirectUrl, '#/?') ? '&' : '?';
+        $redirectUrl .= strpos($request->redirectUrl, '?') ? '&' : '?';
         $redirectUrl .= 'ticket='.$ticket;
-        return responder()->success([$redirectUrl]);
+        $redirectUrl .= '&userId='.$userId;
+        return redirect($redirectUrl);
     }
 
 }

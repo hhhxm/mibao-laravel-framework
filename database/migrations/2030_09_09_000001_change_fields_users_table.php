@@ -15,7 +15,6 @@ class ChangeFieldsUsersTable extends Migration
     {
         // user_id由整数型改成uuid型
         Schema::table('users', function (Blueprint $table) {
-            $table->primary('id');
             $table->string('id', 36)->change();
             $table->dropUnique('users_email_unique');
             $table->string('email')->change()->unique()->nullable();

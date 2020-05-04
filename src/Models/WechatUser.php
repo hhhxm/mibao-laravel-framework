@@ -24,7 +24,7 @@ class WechatUser extends Authenticatable implements HasMedia
 
     public $incrementing = false;
     public $viewOpenid = false;
-    
+
     /*
      * 添加属性
      */
@@ -41,7 +41,7 @@ class WechatUser extends Authenticatable implements HasMedia
      * @var array
      */
     // protected $hidden = [ 'openid', 'language', 'province', 'city', 'country', 'privilege', 'unionid', ];
-    protected $visible = ['id','nickname', 'headimgurl', 'sex', 'user'];
+    protected $visible = ['id','nickname', 'headimgurl', 'sex', 'user', 'created_at'];
     /**
      * 应该被转化为原生类型的属性
      *
