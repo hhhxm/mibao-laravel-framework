@@ -185,6 +185,7 @@ use Flugg\Responder\Exceptions\Handler as ExceptionHandler;
 <https://docs.spatie.be/laravel-permission/v3/installation-laravel/>
 <https://github.com/sfelix-martins/passport-multiauth>
 <https://github.com/flugger/laravel-responder>
+<https://docs.spatie.be/laravel-medialibrary/v7/>
 
 ## 相关参考
 

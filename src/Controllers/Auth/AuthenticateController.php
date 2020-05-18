@@ -187,7 +187,8 @@ class AuthenticateController extends Controller
             new PhoneNumber($request->phone, $phonePrefix)
         )->notify(new VerificationCode($code));
 
-        return responder()->success(['id'=>$modelId, 'code'=>$code]);
+        // return responder()->success(['id'=>$modelId, 'code'=>$code]);
+        return responder()->success(['id'=>$modelId]);
     }
     /**
      * 从api验证短信验证码
@@ -209,14 +210,24 @@ class AuthenticateController extends Controller
      *
      * @return Boolean
      */
-    public function checkSmsVerificationCode($code, $modelId)
+    public function checkSmsVerificationCode($code, $modelId, $remove=false)
     {
         $redis = new RedisHelper;
         if($code == $redis->getValue('smsVerificationCode', 'noModel', $modelId, true)){
-            $redis->delValue('smsVerificationCode', 'noModel', $modelId, true);
+            if($remove){
+                $redis->delValue('smsVerificationCode', 'noModel', $modelId, true);
+            }
             return true;
         }else{
             return false;
         }
+    }
+    /**
+     * 删除验证短信验证码
+     *
+     */
+    public function removeSmsVerificationCode($code, $modelId)
+    {
+        (new RedisHelper)->delValue('smsVerificationCode', 'noModel', $modelId, true);
     }
 }

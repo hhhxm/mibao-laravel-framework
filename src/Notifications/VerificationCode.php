@@ -64,9 +64,9 @@ class VerificationCode extends Notification
     public function toEasySms($notifiable)
     {
         return (new EasySmsMessage)
-            ->setContent("您的验证码为: $this->code")
+            // ->setContent("您的验证码为: $this->code")
             // ->setTemplate('SMS_174905750')
-            ->setTemplate('SMS_174905751')
+            ->setTemplate('SMS_189712384')
             ->setData(['code' => $this->code]);
     }
 }
